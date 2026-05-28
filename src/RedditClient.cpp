@@ -18,6 +18,16 @@ std::vector<std::string> RedditClient::searchSubreddits(const std::string &query
     return names;
 }
 
+std::vector<PostData> RedditClient::searchPosts(const std::string &query, const std::string &sort,
+                                                  const std::string &timeFilter, int limit) {
+    std::string url = std::string(ANON_BASE) + "/search.json?q=" + query
+                    + "&type=link&sort=" + sort + "&limit=" + std::to_string(limit) + "&raw_json=1";
+    if (!timeFilter.empty()) url += "&t=" + timeFilter;
+    auto body = httpGet(url);
+    if (body.empty() || body.size() < 10 || body[0] == '<') return {};
+    return parseListing(body);
+}
+
 std::vector<PostData> RedditClient::fetchPosts(const std::string &sub, const std::string &sort, int limit) {
     std::string url = std::string(ANON_BASE) + "/r/" + sub + "/" + sort
                     + ".json?limit=" + std::to_string(limit) + "&raw_json=1";

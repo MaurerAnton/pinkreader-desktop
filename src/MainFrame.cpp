@@ -68,10 +68,29 @@ void MainFrame::onSearch(wxCommandEvent &) {
 void MainFrame::doSearch(const SearchParams &params) {
     if (params.type == "subs") {
         auto subs = client_->searchSubreddits(params.query, params.sort, params.limit);
-        // For now, just load the first result
-        if (!subs.empty()) loadPosts(subs[0]);
+        if (subs.empty()) {
+            wxLogStatus("No subreddits found for: " + wxString::FromUTF8(params.query));
+            return;
+        }
+        wxArrayString choices;
+        for (auto &s : subs) choices.Add(wxString::FromUTF8(s));
+        wxSingleChoiceDialog dlg(this, "Select a subreddit:", "Search Results", choices);
+        if (dlg.ShowModal() == wxID_OK) {
+            std::string sel = std::string(dlg.GetStringSelection().mb_str());
+            loadPosts(sel, "hot");
+        }
     } else {
-        loadPosts(params.query, params.sort);
+        // Post search: search within subreddits or all of Reddit
+        auto posts = client_->searchPosts(params.query, params.sort, params.timeFilter, params.limit);
+        if (posts.empty()) {
+            wxLogStatus("No posts found for: " + wxString::FromUTF8(params.query));
+            return;
+        }
+        currentSub_ = "search:" + params.query;
+        SetTitle("PinkReader Desktop");
+        posts_ = posts;
+        postList_->setPosts(posts_);
+        wxLogStatus(wxString::Format("%zu posts for \"%s\"", posts_.size(), params.query));
     }
 }
 
