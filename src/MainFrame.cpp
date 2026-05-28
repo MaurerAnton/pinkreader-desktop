@@ -3,15 +3,22 @@
 #include "ImageViewPanel.h"
 #include "SearchPanel.h"
 #include "RedditClient.h"
+#include <cstdio>
 
 MainFrame::MainFrame(const wxString &title)
     : wxFrame(nullptr, wxID_ANY, title, wxDefaultPosition, wxSize(1024, 700))
 {
+    fprintf(stderr, "[MainFrame] constructor start\n"); fflush(stderr);
     client_ = std::make_unique<RedditClient>();
+    fprintf(stderr, "[MainFrame] RedditClient created\n"); fflush(stderr);
     setupMenu();
+    fprintf(stderr, "[MainFrame] menu done\n"); fflush(stderr);
     setupLayout();
+    fprintf(stderr, "[MainFrame] layout done\n"); fflush(stderr);
     CreateStatusBar();
+    fprintf(stderr, "[MainFrame] statusbar done, loading posts\n"); fflush(stderr);
     loadPosts("popular", "hot");
+    fprintf(stderr, "[MainFrame] posts loaded\n"); fflush(stderr);
 }
 
 void MainFrame::setupMenu() {

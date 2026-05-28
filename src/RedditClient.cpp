@@ -1,13 +1,19 @@
 #include "RedditClient.h"
 #include "JSONParser.h"
 #include <sstream>
+#include <cstdio>
 
 std::vector<PostData> RedditClient::fetchPosts(const std::string &sub, const std::string &sort, int limit) {
     std::string url = std::string(ANON_BASE) + "/r/" + sub + "/" + sort
                     + ".json?limit=" + std::to_string(limit) + "&raw_json=1";
     auto body = httpGet(url);
-    if (body.empty()) return {};
-    return parseListing(body);
+    fprintf(stderr, "[fetchPosts] %s -> %zu bytes\n", sub.c_str(), body.size());
+    fflush(stderr);
+    if (body.empty() || body.size() < 10) return {};
+    auto posts = parseListing(body);
+    fprintf(stderr, "[fetchPosts] parsed %zu posts\n", posts.size());
+    fflush(stderr);
+    return posts;
 }
 
 std::string RedditClient::httpGet(const std::string &url) {

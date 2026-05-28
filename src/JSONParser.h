@@ -118,9 +118,15 @@ inline PostData parsePost(const JVal &d) {
 inline std::vector<PostData> parseListing(const std::string &json) {
     std::vector<PostData> posts;
     JVal root = parseJSON(json);
-    JVal ch = root["data"]["children"];
-    for (int i = 0; i < ch.sz(); i++)
-        if (ch.at(i)["kind"].str() == "t3")
-            posts.push_back(parsePost(ch.at(i)["data"]));
+    JVal data = root["data"];
+    if (data.type != JOBJ) return posts;
+    JVal ch = data["children"];
+    if (ch.type != JARR) return posts;
+    for (int i = 0; i < ch.sz(); i++) {
+        JVal child = ch.at(i);
+        if (child.type != JOBJ) continue;
+        if (child["kind"].str() == "t3")
+            posts.push_back(parsePost(child["data"]));
+    }
     return posts;
 }
