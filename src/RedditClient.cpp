@@ -21,11 +21,17 @@ static std::string buildOldRedditUrl(const std::string &sub, const std::string &
 }
 
 static std::vector<std::string> parseOldRedditSubreddits(const std::string &html) {
+    fprintf(stderr, "[oldreddit-sub] html %zu bytes\n", html.size()); fflush(stderr);
     std::vector<std::string> names;
     size_t pos = 0;
+    int found = 0;
     while (true) {
-        pos = html.find("<div class=\" thing", pos);
-        if (pos == std::string::npos) { pos = html.find("<div class=\"thing", pos); if (pos == std::string::npos) break; }
+        size_t p1 = html.find("<div class=\" thing", pos);
+        size_t p2 = html.find("<div class=\"thing", pos);
+        if (p1 == std::string::npos && p2 == std::string::npos) break;
+        pos = (p1 != std::string::npos) ? p1 : p2;
+        found++;
+        fprintf(stderr, "[oldreddit-sub] #%d found at offset %zu\n", found, pos); fflush(stderr);
         size_t tagEnd = html.find('>', pos);
         if (tagEnd == std::string::npos) break;
         // Find matching </div>
@@ -40,8 +46,10 @@ static std::vector<std::string> parseOldRedditSubreddits(const std::string &html
         }
         std::string chunk = html.substr(pos, end - pos);
         pos = end;
-        // Extract subreddit name from <a class="title may-blank" href="/r/...">name</a>
-        size_t tp = chunk.find("<a class=\"title");
+        fprintf(stderr, "[oldreddit-sub] chunk %zu bytes\n", chunk.size()); fflush(stderr);
+        // Extract subreddit name from <a class="title" >name</a>
+        size_t tp = chunk.find("class=\"title\"");
+        if (tp == std::string::npos) tp = chunk.find("<a class=\"title");
         if (tp != std::string::npos) {
             tp = chunk.find(">", tp);
             if (tp != std::string::npos) {
@@ -49,7 +57,10 @@ static std::vector<std::string> parseOldRedditSubreddits(const std::string &html
                 size_t te = chunk.find("</a>", tp);
                 if (te != std::string::npos) {
                     std::string name = chunk.substr(tp, te - tp);
-                    if (!name.empty()) names.push_back(name);
+                    if (!name.empty()) {
+                        names.push_back(name);
+                        fprintf(stderr, "[oldreddit-sub] #%d name=%s\n", found, name.c_str()); fflush(stderr);
+                    }
                 }
             }
         }
