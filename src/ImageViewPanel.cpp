@@ -30,7 +30,7 @@ void ImageViewPanel::showImage(const std::string &url, const std::string &captio
     // Sanitize caption to ASCII-only
     std::string cleanCaption;
     for (char c : caption) if ((unsigned char)c >= 0x20 && (unsigned char)c < 0x7F) cleanCaption += c;
-    caption_->SetLabel(wxString::FromAscii(cleanCaption));
+    caption_->SetLabel(wxString::FromAscii(cleanCaption.c_str()));
     bool isImage = (url.find(".jpg") != std::string::npos ||
                     url.find(".jpeg") != std::string::npos ||
                     url.find(".png") != std::string::npos ||
