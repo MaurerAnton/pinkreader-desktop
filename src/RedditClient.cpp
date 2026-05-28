@@ -6,24 +6,25 @@
 std::vector<PostData> RedditClient::fetchPosts(const std::string &sub, const std::string &sort, int limit) {
     std::string url = std::string(ANON_BASE) + "/r/" + sub + "/" + sort
                     + ".json?limit=" + std::to_string(limit) + "&raw_json=1";
+    fprintf(stderr, "[fetchPosts] URL: %s\n", url.c_str()); fflush(stderr);
     auto body = httpGet(url);
-    fprintf(stderr, "[fetchPosts] %s -> %zu bytes\n", sub.c_str(), body.size());
-    fflush(stderr);
-    if (body.empty() || body.size() < 10) return {};
+    fprintf(stderr, "[fetchPosts] %s -> %zu bytes\n", sub.c_str(), body.size()); fflush(stderr);
+    if (body.empty() || body.size() < 10) { fprintf(stderr, "[fetchPosts] body too small\n"); fflush(stderr); return {}; }
     if (body[0] == '<') {
-        fprintf(stderr, "[fetchPosts] HTML response (likely rate limited): %.100s\n", body.c_str());
+        fprintf(stderr, "[fetchPosts] HTML response: %.200s\n", body.c_str()); fflush(stderr);
         return {};
     }
+    fprintf(stderr, "[fetchPosts] body start: %.80s\n", body.c_str()); fflush(stderr);
     auto posts = parseListing(body);
-    fprintf(stderr, "[fetchPosts] parsed %zu posts\n", posts.size());
-    fflush(stderr);
+    fprintf(stderr, "[fetchPosts] parsed %zu posts\n", posts.size()); fflush(stderr);
     return posts;
 }
 
 std::string RedditClient::httpGet(const std::string &url) {
+    fprintf(stderr, "[httpGet] %s\n", url.c_str()); fflush(stderr);
     std::string body;
     auto *curl = curl_easy_init();
-    if (!curl) return "";
+    if (!curl) { fprintf(stderr, "[httpGet] curl_easy_init failed\n"); fflush(stderr); return ""; }
     curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
     curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION,
         +[](char *ptr, size_t sz, size_t nmemb, void *ud) -> size_t {
@@ -43,6 +44,9 @@ std::string RedditClient::httpGet(const std::string &url) {
     } else {
         curl_easy_perform(curl);
     }
+    long code = 0;
+    curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &code);
+    fprintf(stderr, "[httpGet] HTTP %ld, body %zu bytes\n", code, body.size()); fflush(stderr);
     curl_easy_cleanup(curl);
     return body;
 }

@@ -5,6 +5,7 @@
 #include <cstring>
 #include <cstdlib>
 #include <cstdint>
+#include <cstdio>
 #include "PostData.h"
 
 enum JType { JNULL, JBOOL, JNUM, JSTR, JARR, JOBJ };
@@ -117,16 +118,24 @@ inline PostData parsePost(const JVal &d) {
 
 inline std::vector<PostData> parseListing(const std::string &json) {
     std::vector<PostData> posts;
+    fprintf(stderr, "[parseListing] %zu bytes\n", json.size()); fflush(stderr);
     JVal root = parseJSON(json);
+    fprintf(stderr, "[parseListing] root type=%d\n", (int)root.type); fflush(stderr);
     JVal data = root["data"];
-    if (data.type != JOBJ) return posts;
+    if (data.type != JOBJ) { fprintf(stderr, "[parseListing] data not JOBJ\n"); fflush(stderr); return posts; }
     JVal ch = data["children"];
-    if (ch.type != JARR) return posts;
+    if (ch.type != JARR) { fprintf(stderr, "[parseListing] children not JARR\n"); fflush(stderr); return posts; }
+    fprintf(stderr, "[parseListing] children count=%d\n", ch.sz()); fflush(stderr);
     for (int i = 0; i < ch.sz(); i++) {
         JVal child = ch.at(i);
         if (child.type != JOBJ) continue;
-        if (child["kind"].str() == "t3")
-            posts.push_back(parsePost(child["data"]));
+        JVal cdata = child["data"];
+        std::string kind = child["kind"].str();
+        if (kind == "t3") {
+            PostData p = parsePost(cdata);
+            fprintf(stderr, "[parseListing] post %d: %s\n", i, p.title.c_str()); fflush(stderr);
+            posts.push_back(p);
+        }
     }
     return posts;
 }
