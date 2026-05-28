@@ -70,8 +70,8 @@ void MainFrame::onPostSelected(wxListEvent &evt) {
     if (idx >= 0 && idx < (int)posts_.size()) {
         auto &p = posts_[idx];
         imageView_->showImage(p.url, p.title);
-        wxLogStatus("r/%s — u/%s — %d pts, %d comments",
-                     p.subreddit, p.author, p.score, p.numComments);
+        wxLogStatus(wxString::Format("r/%s — u/%s — %d pts, %d comments",
+                     p.subreddit.c_str(), p.author.c_str(), p.score, p.numComments));
     }
 }
 
