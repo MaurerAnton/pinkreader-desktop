@@ -27,7 +27,7 @@ static size_t curlWrite(void *ptr, size_t sz, size_t nmemb, void *ud) {
 }
 
 void ImageViewPanel::showImage(const std::string &url, const std::string &caption) {
-    caption_->SetLabel(wxString::FromUTF8(caption));
+    caption_->SetLabel(wxString(caption.c_str(), wxConvUTF8));
     bool isImage = (url.find(".jpg") != std::string::npos ||
                     url.find(".jpeg") != std::string::npos ||
                     url.find(".png") != std::string::npos ||

@@ -92,7 +92,7 @@ void MainFrame::loadPosts(const std::string &subreddit, const std::string &sort)
     fprintf(stderr, "[loadPosts] %s/%s\n", subreddit.c_str(), sort.c_str()); fflush(stderr);
     currentSub_ = subreddit;
     fprintf(stderr, "[loadPosts] SetTitle...\n"); fflush(stderr);
-    SetTitle(wxString::Format("PinkReader Desktop — r/%s", subreddit.c_str()));
+    SetTitle("PinkReader Desktop");
     fprintf(stderr, "[loadPosts] fetchPosts...\n"); fflush(stderr);
     posts_ = client_->fetchPosts(subreddit, sort, 50);
     fprintf(stderr, "[loadPosts] got %zu posts, calling setPosts\n", posts_.size()); fflush(stderr);
