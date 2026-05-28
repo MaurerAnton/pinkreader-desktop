@@ -66,11 +66,13 @@ void MainFrame::onSearch(wxCommandEvent &) {
 }
 
 void MainFrame::onPostSelected(wxListEvent &evt) {
+    fprintf(stderr, "[onPostSelected] index=%d\n", evt.GetIndex()); fflush(stderr);
     int idx = evt.GetIndex();
     if (idx >= 0 && idx < (int)posts_.size()) {
         auto &p = posts_[idx];
+        fprintf(stderr, "[onPostSelected] url=%s\n", p.url.c_str()); fflush(stderr);
         imageView_->showImage(p.url, p.title);
-        wxLogStatus(wxString::Format("r/%s — u/%s — %d pts, %d comments",
+        wxLogStatus(wxString::Format("r/%s - u/%s - %d pts, %d comments",
                      p.subreddit.c_str(), p.author.c_str(), p.score, p.numComments));
     }
 }
