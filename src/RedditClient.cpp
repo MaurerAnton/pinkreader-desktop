@@ -10,6 +10,10 @@ std::vector<PostData> RedditClient::fetchPosts(const std::string &sub, const std
     fprintf(stderr, "[fetchPosts] %s -> %zu bytes\n", sub.c_str(), body.size());
     fflush(stderr);
     if (body.empty() || body.size() < 10) return {};
+    if (body[0] == '<') {
+        fprintf(stderr, "[fetchPosts] HTML response (likely rate limited): %.100s\n", body.c_str());
+        return {};
+    }
     auto posts = parseListing(body);
     fprintf(stderr, "[fetchPosts] parsed %zu posts\n", posts.size());
     fflush(stderr);
