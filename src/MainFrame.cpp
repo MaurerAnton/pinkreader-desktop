@@ -64,7 +64,7 @@ void MainFrame::onPostSelected(wxListEvent &evt) {
     }
 }
 
-void MainFrame::onRefresh() { loadPosts(currentSub_); }
+void MainFrame::onRefresh(wxCommandEvent &) { loadPosts(currentSub_); }
 
 void MainFrame::onLogin(wxCommandEvent &) {
     wxTextEntryDialog dlg(this, "Enter OAuth Bearer token:", "PinkReader Login");

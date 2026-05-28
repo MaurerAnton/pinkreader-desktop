@@ -29,7 +29,7 @@ private:
     void setupLayout();
     void onSearch(wxCommandEvent &evt);
     void onPostSelected(wxListEvent &evt);
-    void onRefresh();
+    void onRefresh(wxCommandEvent &evt);
     void onLogin(wxCommandEvent &evt);
     void loadPosts(const std::string &subreddit, const std::string &sort = "hot");
 
