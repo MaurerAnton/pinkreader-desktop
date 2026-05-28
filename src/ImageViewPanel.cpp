@@ -3,6 +3,7 @@
 #include <wx/image.h>
 #include <wx/mstream.h>
 #include <cstdint>
+#include <cstdio>
 #include <algorithm>
 
 ImageViewPanel::ImageViewPanel(wxWindow *parent)
@@ -11,13 +12,14 @@ ImageViewPanel::ImageViewPanel(wxWindow *parent)
     auto *sizer = new wxBoxSizer(wxVERTICAL);
     caption_ = new wxStaticText(this, wxID_ANY, "");
     caption_->SetFont(wxFont(10, wxFONTFAMILY_DEFAULT, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_BOLD));
-    status_ = new wxStaticText(this, wxID_ANY, "Select a post to view image");
+    status_ = new wxStaticText(this, wxID_ANY, "Select an image post to view");
     bitmap_ = new wxStaticBitmap(this, wxID_ANY, wxNullBitmap, wxDefaultPosition,
-                                  wxDefaultSize, wxBORDER_SIMPLE);
+                                  wxSize(400, 300), wxBORDER_SIMPLE);
     sizer->Add(caption_, 0, wxEXPAND | wxALL, 5);
     sizer->Add(bitmap_, 1, wxEXPAND | wxALL, 5);
     sizer->Add(status_, 0, wxEXPAND | wxALL, 5);
     SetSizer(sizer);
+    bitmap_->SetMinSize(wxSize(100, 100));
 }
 
 static size_t curlWrite(void *ptr, size_t sz, size_t nmemb, void *ud) {
@@ -27,23 +29,28 @@ static size_t curlWrite(void *ptr, size_t sz, size_t nmemb, void *ud) {
 }
 
 void ImageViewPanel::showImage(const std::string &url, const std::string &caption) {
-    // Sanitize caption to ASCII-only
     std::string cleanCaption;
     for (char c : caption) if ((unsigned char)c >= 0x20 && (unsigned char)c < 0x7F) cleanCaption += c;
     caption_->SetLabel(wxString::FromAscii(cleanCaption.c_str()));
+
+    // Also handle gallery URLs and imgur
     bool isImage = (url.find(".jpg") != std::string::npos ||
                     url.find(".jpeg") != std::string::npos ||
                     url.find(".png") != std::string::npos ||
                     url.find(".gif") != std::string::npos ||
                     url.find(".webp") != std::string::npos ||
+                    url.find(".bmp") != std::string::npos ||
                     url.find("i.redd.it") != std::string::npos ||
-                    url.find("preview.redd.it") != std::string::npos);
+                    url.find("preview.redd.it") != std::string::npos ||
+                    url.find("i.imgur.com") != std::string::npos);
     if (!isImage) {
-        status_->SetLabel("URL: " + wxString::FromUTF8(url));
+        status_->SetLabel("Not an image: " + wxString::FromAscii(url.c_str()));
         bitmap_->SetBitmap(wxNullBitmap);
+        Layout();
         return;
     }
 
+    fprintf(stderr, "[showImage] downloading %s\n", url.c_str()); fflush(stderr);
     status_->SetLabel("Downloading...");
     std::vector<uint8_t> data;
     auto *curl = curl_easy_init();
@@ -58,6 +65,7 @@ void ImageViewPanel::showImage(const std::string &url, const std::string &captio
         curl_easy_cleanup(curl);
     }
 
+    fprintf(stderr, "[showImage] downloaded %zu bytes\n", data.size()); fflush(stderr);
     if (data.empty()) {
         status_->SetLabel("Failed to download");
         return;
@@ -66,15 +74,18 @@ void ImageViewPanel::showImage(const std::string &url, const std::string &captio
     wxMemoryInputStream mis(data.data(), data.size());
     wxImage img(mis, wxBITMAP_TYPE_ANY);
     if (!img.IsOk()) {
-        status_->SetLabel("Failed to decode image (" +
+        status_->SetLabel("Failed to decode (" +
                           wxString::Format("%zu", data.size()) + " bytes)");
         return;
     }
 
     int maxW = bitmap_->GetSize().GetWidth() - 10;
     int maxH = bitmap_->GetSize().GetHeight() - 10;
-    if (maxW < 100) maxW = 400;
-    if (maxH < 100) maxH = 300;
+    if (maxW < 50) maxW = 400;
+    if (maxH < 50) maxH = 300;
+    fprintf(stderr, "[showImage] decoded %dx%d, max %dx%d\n",
+            img.GetWidth(), img.GetHeight(), maxW, maxH); fflush(stderr);
+
     if (img.GetWidth() > maxW || img.GetHeight() > maxH) {
         double s = std::min((double)maxW / img.GetWidth(), (double)maxH / img.GetHeight());
         img.Rescale((int)(img.GetWidth() * s), (int)(img.GetHeight() * s),
@@ -84,4 +95,5 @@ void ImageViewPanel::showImage(const std::string &url, const std::string &captio
     status_->SetLabel(wxString::Format("%dx%d  %.1f KB",
                         img.GetWidth(), img.GetHeight(), data.size() / 1024.0));
     Layout();
+    fprintf(stderr, "[showImage] done\n"); fflush(stderr);
 }
