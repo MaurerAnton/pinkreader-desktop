@@ -66,6 +66,8 @@ void MainFrame::onSearch(wxCommandEvent &) {
 }
 
 void MainFrame::doSearch(const SearchParams &params) {
+    client_->setBestQuality(params.bestQuality);
+    client_->setDedup(params.dedup);
     if (params.type == "subs") {
         auto subs = client_->searchSubreddits(params.query, params.sort, params.limit);
         if (subs.empty()) {
@@ -80,8 +82,11 @@ void MainFrame::doSearch(const SearchParams &params) {
             loadPosts(sel, "hot");
         }
     } else {
-        // Post search: search within subreddits or all of Reddit
         auto posts = client_->searchPosts(params.query, params.sort, params.timeFilter, params.limit);
+        if (params.imagesOnly) {
+            posts.erase(std::remove_if(posts.begin(), posts.end(),
+                [](const PostData &p) { return p.postHint != "image"; }), posts.end());
+        }
         if (posts.empty()) {
             wxLogStatus("No posts found for: " + wxString::FromUTF8(params.query));
             return;
@@ -90,7 +95,8 @@ void MainFrame::doSearch(const SearchParams &params) {
         SetTitle("PinkReader Desktop");
         posts_ = posts;
         postList_->setPosts(posts_);
-        wxLogStatus(wxString::Format("%zu posts for \"%s\"", posts_.size(), params.query));
+        wxLogStatus(wxString::Format("r/%s - %zu posts | API: %d/%d",
+                      params.query, posts_.size(), client_->requestCount(), RedditClient::RATE_LIMIT));
     }
 }
 
@@ -122,11 +128,9 @@ void MainFrame::onNavAll(wxCommandEvent &) { loadPosts("all"); }
 void MainFrame::loadPosts(const std::string &subreddit, const std::string &sort) {
     fprintf(stderr, "[loadPosts] %s/%s\n", subreddit.c_str(), sort.c_str()); fflush(stderr);
     currentSub_ = subreddit;
-    fprintf(stderr, "[loadPosts] SetTitle...\n"); fflush(stderr);
     SetTitle("PinkReader Desktop");
-    fprintf(stderr, "[loadPosts] fetchPosts...\n"); fflush(stderr);
     posts_ = client_->fetchPosts(subreddit, sort, 50);
-    fprintf(stderr, "[loadPosts] got %zu posts, calling setPosts\n", posts_.size()); fflush(stderr);
     postList_->setPosts(posts_);
-    fprintf(stderr, "[loadPosts] done\n"); fflush(stderr);
+    wxLogStatus(wxString::Format("r/%s - %zu posts | API: %d/%d",
+                  subreddit, posts_.size(), client_->requestCount(), RedditClient::RATE_LIMIT));
 }

@@ -6,11 +6,14 @@
 
 struct SearchParams {
     std::string query;
-    std::string type = "subs";   // subs or posts
+    std::string type = "subs";
     std::string sort = "relevance";
     std::string timeFilter;
     int limit = 25;
     bool nsfw = false;
+    bool bestQuality = false;
+    bool dedup = false;
+    bool imagesOnly = false;
 };
 
 class SearchPanel : public wxPanel {
@@ -26,5 +29,8 @@ private:
     wxComboBox *timeBox_ = nullptr;
     wxSpinCtrl *limitSpin_ = nullptr;
     wxCheckBox *nsfwCheck_ = nullptr;
+    wxCheckBox *bestQualityCheck_ = nullptr;
+    wxCheckBox *dedupCheck_ = nullptr;
+    wxCheckBox *imagesOnlyCheck_ = nullptr;
     wxButton *searchBtn_ = nullptr;
 };

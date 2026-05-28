@@ -17,32 +17,23 @@ SearchPanel::SearchPanel(wxWindow *parent)
 
     typeBox_ = new wxComboBox(this, wxID_ANY, "Subreddits", wxDefaultPosition, wxDefaultSize,
                                0, nullptr, wxCB_READONLY);
-    typeBox_->Append("Subreddits");
-    typeBox_->Append("Posts");
+    typeBox_->Append("Subreddits"); typeBox_->Append("Posts");
     typeBox_->SetSelection(0);
     row2->Add(new wxStaticText(this, wxID_ANY, "Type:"), 0, wxALIGN_CENTER_VERTICAL | wxLEFT, 4);
     row2->Add(typeBox_, 0, wxALL, 2);
 
     sortBox_ = new wxComboBox(this, wxID_ANY, "relevance", wxDefaultPosition, wxDefaultSize,
                                0, nullptr, wxCB_READONLY);
-    sortBox_->Append("relevance");
-    sortBox_->Append("hot");
-    sortBox_->Append("new");
-    sortBox_->Append("top");
-    sortBox_->Append("comments");
+    sortBox_->Append("relevance"); sortBox_->Append("hot"); sortBox_->Append("new");
+    sortBox_->Append("top"); sortBox_->Append("comments");
     sortBox_->SetSelection(0);
     row2->Add(new wxStaticText(this, wxID_ANY, "Sort:"), 0, wxALIGN_CENTER_VERTICAL, 0);
     row2->Add(sortBox_, 0, wxALL, 2);
 
     timeBox_ = new wxComboBox(this, wxID_ANY, "", wxDefaultPosition, wxDefaultSize,
                                0, nullptr, wxCB_READONLY);
-    timeBox_->Append("any time");
-    timeBox_->Append("hour");
-    timeBox_->Append("day");
-    timeBox_->Append("week");
-    timeBox_->Append("month");
-    timeBox_->Append("year");
-    timeBox_->Append("all");
+    timeBox_->Append("any time"); timeBox_->Append("hour"); timeBox_->Append("day");
+    timeBox_->Append("week"); timeBox_->Append("month"); timeBox_->Append("year"); timeBox_->Append("all");
     timeBox_->SetSelection(0);
     row2->Add(new wxStaticText(this, wxID_ANY, "Time:"), 0, wxALIGN_CENTER_VERTICAL, 0);
     row2->Add(timeBox_, 0, wxALL, 2);
@@ -53,6 +44,18 @@ SearchPanel::SearchPanel(wxWindow *parent)
     row2->Add(limitSpin_, 0, wxALL, 2);
 
     sizer->Add(row2, 0, wxEXPAND | wxALL, 2);
+
+    auto *row3 = new wxBoxSizer(wxHORIZONTAL);
+    bestQualityCheck_ = new wxCheckBox(this, wxID_ANY, "Best quality");
+    dedupCheck_ = new wxCheckBox(this, wxID_ANY, "Dedup");
+    imagesOnlyCheck_ = new wxCheckBox(this, wxID_ANY, "Images only");
+    nsfwCheck_ = new wxCheckBox(this, wxID_ANY, "NSFW");
+    row3->Add(bestQualityCheck_, 0, wxALL, 2);
+    row3->Add(dedupCheck_, 0, wxALL, 2);
+    row3->Add(imagesOnlyCheck_, 0, wxALL, 2);
+    row3->Add(nsfwCheck_, 0, wxALL, 2);
+    sizer->Add(row3, 0, wxEXPAND | wxALL, 2);
+
     SetSizer(sizer);
 }
 
@@ -64,5 +67,9 @@ SearchParams SearchPanel::getParams() const {
     int ts = timeBox_->GetSelection();
     p.timeFilter = (ts <= 0) ? "" : std::string(timeBox_->GetString(ts).mb_str());
     p.limit = limitSpin_->GetValue();
+    p.nsfw = nsfwCheck_->GetValue();
+    p.bestQuality = bestQualityCheck_->GetValue();
+    p.dedup = dedupCheck_->GetValue();
+    p.imagesOnly = imagesOnlyCheck_->GetValue();
     return p;
 }

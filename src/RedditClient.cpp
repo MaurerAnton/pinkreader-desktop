@@ -2,6 +2,23 @@
 #include "JSONParser.h"
 #include <sstream>
 #include <cstdio>
+#include <algorithm>
+
+void RedditClient::trackRequest() {
+    reqCount_++;
+    time_t now = time(nullptr);
+    if (now - minuteStart_ >= 60) { minuteStart_ = now; reqPerMin_ = 1; }
+    else reqPerMin_++;
+}
+
+std::string RedditClient::bestQualityUrl(const std::string &url) {
+    if (url.find("i.redd.it/") != std::string::npos ||
+        url.find("preview.redd.it/") != std::string::npos) {
+        size_t q = url.find('?');
+        if (q != std::string::npos) return url.substr(0, q);
+    }
+    return url;
+}
 
 std::vector<std::string> RedditClient::searchSubreddits(const std::string &query, const std::string &sort, int limit) {
     std::string url = std::string(ANON_BASE) + "/subreddits/search.json?q=" + query
@@ -25,31 +42,38 @@ std::vector<PostData> RedditClient::searchPosts(const std::string &query, const 
     if (!timeFilter.empty()) url += "&t=" + timeFilter;
     auto body = httpGet(url);
     if (body.empty() || body.size() < 10 || body[0] == '<') return {};
-    return parseListing(body);
+    auto posts = parseListing(body);
+    // Apply best-quality and dedup
+    for (auto &p : posts) {
+        if (bestQuality_) p.url = bestQualityUrl(p.url);
+        if (dedup_ && seenPosts_.count(p.id)) { p.id.clear(); continue; }
+        if (dedup_) seenPosts_.insert(p.id);
+    }
+    posts.erase(std::remove_if(posts.begin(), posts.end(),
+                [](const PostData &p) { return p.id.empty(); }), posts.end());
+    return posts;
 }
 
 std::vector<PostData> RedditClient::fetchPosts(const std::string &sub, const std::string &sort, int limit) {
     std::string url = std::string(ANON_BASE) + "/r/" + sub + "/" + sort
                     + ".json?limit=" + std::to_string(limit) + "&raw_json=1";
-    fprintf(stderr, "[fetchPosts] URL: %s\n", url.c_str()); fflush(stderr);
     auto body = httpGet(url);
-    fprintf(stderr, "[fetchPosts] %s -> %zu bytes\n", sub.c_str(), body.size()); fflush(stderr);
-    if (body.empty() || body.size() < 10) { fprintf(stderr, "[fetchPosts] body too small\n"); fflush(stderr); return {}; }
-    if (body[0] == '<') {
-        fprintf(stderr, "[fetchPosts] HTML response: %.200s\n", body.c_str()); fflush(stderr);
-        return {};
-    }
-    fprintf(stderr, "[fetchPosts] body start: %.80s\n", body.c_str()); fflush(stderr);
+    if (body.empty() || body.size() < 10 || body[0] == '<') return {};
     auto posts = parseListing(body);
-    fprintf(stderr, "[fetchPosts] parsed %zu posts\n", posts.size()); fflush(stderr);
+    for (auto &p : posts) {
+        if (bestQuality_) p.url = bestQualityUrl(p.url);
+        if (dedup_ && seenPosts_.count(p.id)) { p.id.clear(); continue; }
+        if (dedup_) seenPosts_.insert(p.id);
+    }
+    posts.erase(std::remove_if(posts.begin(), posts.end(),
+                [](const PostData &p) { return p.id.empty(); }), posts.end());
     return posts;
 }
 
 std::string RedditClient::httpGet(const std::string &url) {
-    fprintf(stderr, "[httpGet] %s\n", url.c_str()); fflush(stderr);
     std::string body;
     auto *curl = curl_easy_init();
-    if (!curl) { fprintf(stderr, "[httpGet] curl_easy_init failed\n"); fflush(stderr); return ""; }
+    if (!curl) return "";
     curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
     curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION,
         +[](char *ptr, size_t sz, size_t nmemb, void *ud) -> size_t {
@@ -69,9 +93,7 @@ std::string RedditClient::httpGet(const std::string &url) {
     } else {
         curl_easy_perform(curl);
     }
-    long code = 0;
-    curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &code);
-    fprintf(stderr, "[httpGet] HTTP %ld, body %zu bytes\n", code, body.size()); fflush(stderr);
     curl_easy_cleanup(curl);
+    trackRequest();
     return body;
 }
