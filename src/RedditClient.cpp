@@ -23,9 +23,11 @@ static std::string buildOldRedditUrl(const std::string &sub, const std::string &
 static std::vector<PostData> parseOldRedditListing(const std::string &html) {
     std::vector<PostData> posts;
     size_t pos = 0;
+    int found = 0;
     while (true) {
         pos = html.find("<div class=\"thing", pos);
         if (pos == std::string::npos) break;
+        found++;
         // Find end: count nested <div> and </div> from this point
         int depth = 0;
         size_t end = pos;
@@ -42,6 +44,7 @@ static std::vector<PostData> parseOldRedditListing(const std::string &html) {
         }
         std::string chunk = html.substr(pos, end - pos);
         pos = end;
+        fprintf(stderr, "[oldreddit] thing #%d: %zu bytes, depth=%d\n", found, chunk.size(), depth); fflush(stderr);
 
         PostData p;
         auto attr = [&](const std::string &key) -> std::string {
@@ -63,6 +66,9 @@ static std::vector<PostData> parseOldRedditListing(const std::string &html) {
         p.numComments = std::atoi(attr("comments-count").c_str());
         p.over18 = (attr("nsfw") == "true");
 
+        fprintf(stderr, "[oldreddit] id=%s author=%s sub=%s url=%.50s\n",
+                p.id.c_str(), p.author.c_str(), p.subreddit.c_str(), p.url.c_str()); fflush(stderr);
+
         size_t tp = chunk.find("<a class=\"title");
         if (tp != std::string::npos) {
             tp = chunk.find(">", tp);
@@ -72,8 +78,10 @@ static std::vector<PostData> parseOldRedditListing(const std::string &html) {
                 if (te != std::string::npos) p.title = chunk.substr(tp, te - tp);
             }
         }
+        fprintf(stderr, "[oldreddit] title=%.60s\n", p.title.c_str()); fflush(stderr);
         if (!p.title.empty()) posts.push_back(p);
     }
+    fprintf(stderr, "[oldreddit] found %d things, %zu posts with titles\n", found, posts.size()); fflush(stderr);
     return posts;
 }
 
