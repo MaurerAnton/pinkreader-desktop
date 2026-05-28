@@ -1,4 +1,5 @@
 #include <wx/wx.h>
+#include <wx/image.h>
 #include "PinkReaderApp.h"
 #include "MainFrame.h"
 #include <curl/curl.h>
@@ -9,6 +10,7 @@ wxIMPLEMENT_APP(PinkReaderApp);
 bool PinkReaderApp::OnInit() {
     fprintf(stderr, "[pinkreader-desktop] OnInit start\n");
     fflush(stderr);
+    wxInitAllImageHandlers();
     curl_global_init(CURL_GLOBAL_ALL);
     fprintf(stderr, "[pinkreader-desktop] curl init done\n");
     fflush(stderr);
