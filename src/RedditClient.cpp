@@ -3,6 +3,21 @@
 #include <sstream>
 #include <cstdio>
 
+std::vector<std::string> RedditClient::searchSubreddits(const std::string &query, const std::string &sort, int limit) {
+    std::string url = std::string(ANON_BASE) + "/subreddits/search.json?q=" + query
+                    + "&sort=" + sort + "&limit=" + std::to_string(limit) + "&raw_json=1";
+    auto body = httpGet(url);
+    std::vector<std::string> names;
+    if (body.empty() || body.size() < 10 || body[0] == '<') return names;
+    JVal root = parseJSON(body);
+    JVal ch = root["data"]["children"];
+    for (int i = 0; i < ch.sz(); i++) {
+        JVal d = ch.at(i)["data"];
+        if (d.type == JOBJ) names.push_back(d["display_name"].str());
+    }
+    return names;
+}
+
 std::vector<PostData> RedditClient::fetchPosts(const std::string &sub, const std::string &sort, int limit) {
     std::string url = std::string(ANON_BASE) + "/r/" + sub + "/" + sort
                     + ".json?limit=" + std::to_string(limit) + "&raw_json=1";

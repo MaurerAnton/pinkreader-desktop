@@ -8,6 +8,7 @@ class RedditClient {
 public:
     void setToken(const std::string &tok) { token_ = tok; }
     std::vector<PostData> fetchPosts(const std::string &sub, const std::string &sort, int limit = 25);
+    std::vector<std::string> searchSubreddits(const std::string &query, const std::string &sort, int limit = 10);
 
 private:
     std::string httpGet(const std::string &url);

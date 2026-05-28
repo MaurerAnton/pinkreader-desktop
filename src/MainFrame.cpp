@@ -52,7 +52,7 @@ void MainFrame::setupLayout() {
     auto *rightPanel = new wxPanel(splitter_);
     auto *rightSizer = new wxBoxSizer(wxVERTICAL);
     searchPanel_ = new SearchPanel(rightPanel);
-    searchPanel_->getButton()->Bind(wxEVT_BUTTON, &MainFrame::onSearch, this);
+    searchPanel_->getSearchButton()->Bind(wxEVT_BUTTON, &MainFrame::onSearch, this);
     imageView_ = new ImageViewPanel(rightPanel);
     rightSizer->Add(searchPanel_, 0, wxEXPAND | wxALL, 5);
     rightSizer->Add(imageView_, 1, wxEXPAND | wxALL, 5);
@@ -61,8 +61,18 @@ void MainFrame::setupLayout() {
 }
 
 void MainFrame::onSearch(wxCommandEvent &) {
-    std::string query = searchPanel_->getQuery();
-    if (!query.empty()) loadPosts(query);
+    SearchParams params = searchPanel_->getParams();
+    if (!params.query.empty()) doSearch(params);
+}
+
+void MainFrame::doSearch(const SearchParams &params) {
+    if (params.type == "subs") {
+        auto subs = client_->searchSubreddits(params.query, params.sort, params.limit);
+        // For now, just load the first result
+        if (!subs.empty()) loadPosts(subs[0]);
+    } else {
+        loadPosts(params.query, params.sort);
+    }
 }
 
 void MainFrame::onPostSelected(wxListEvent &evt) {

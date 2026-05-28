@@ -3,6 +3,7 @@
 #include <wx/splitter.h>
 #include <wx/listctrl.h>
 #include "PostData.h"
+#include "SearchPanel.h"
 #include <memory>
 #include <string>
 #include <vector>
@@ -32,6 +33,7 @@ private:
     void onNavPopular(wxCommandEvent &evt);
     void onNavAll(wxCommandEvent &evt);
     void loadPosts(const std::string &subreddit, const std::string &sort = "hot");
+    void doSearch(const SearchParams &params);
 
     wxSplitterWindow *splitter_ = nullptr;
     PostListPanel *postList_ = nullptr;
