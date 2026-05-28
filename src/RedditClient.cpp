@@ -64,7 +64,17 @@ std::vector<PostData> RedditClient::searchPosts(const std::string &query, const 
 std::vector<PostData> RedditClient::fetchPosts(const std::string &sub, const std::string &sort, int limit) {
     std::string url = std::string(ANON_BASE) + "/r/" + sub + "/" + sort
                     + ".json?limit=" + std::to_string(limit) + "&raw_json=1";
-    return filterPosts(parseListing(httpGet(url)));
+    auto body = httpGet(url);
+    auto posts = filterPosts(::parseListing(body));
+
+    // Fallback: try old.reddit.com if JSON API returned 403
+    if (posts.empty() && !body.empty() && body[0] != '{') {
+        std::string oldUrl = buildOldRedditUrl(sub, sort);
+        fprintf(stderr, "[fallback] trying old.reddit.com: %s\n", oldUrl.c_str()); fflush(stderr);
+        auto oldBody = httpGet(oldUrl);
+        posts = filterPosts(parseOldRedditListing(oldBody));
+    }
+    return posts;
 }
 
 std::vector<PostData> RedditClient::filterPosts(std::vector<PostData> posts) {
@@ -108,4 +118,57 @@ std::string RedditClient::httpGet(const std::string &url) {
     curl_easy_cleanup(curl);
     trackRequest();
     return body;
+}
+
+// ── old.reddit.com HTML parser (fallback for 403) ─────────────────────────
+
+static std::string buildOldRedditUrl(const std::string &sub, const std::string &sort) {
+    if (sub == "popular") return "https://old.reddit.com/r/popular/" + sort + "/";
+    if (sub == "all") return "https://old.reddit.com/r/all/" + sort + "/";
+    return "https://old.reddit.com/r/" + sub + "/" + sort + "/";
+}
+
+static std::vector<PostData> parseOldRedditListing(const std::string &html) {
+    std::vector<PostData> posts;
+    size_t pos = 0;
+    while (true) {
+        pos = html.find("<div class=\"thing", pos);
+        if (pos == std::string::npos) break;
+        size_t end = html.find("</div>", pos + 200);
+        if (end == std::string::npos) break;
+        std::string chunk = html.substr(pos, end - pos + 6);
+        pos = end;
+
+        PostData p;
+        auto attr = [&](const std::string &key) -> std::string {
+            std::string k = "data-" + key + "=\"";
+            size_t a = chunk.find(k);
+            if (a == std::string::npos) return "";
+            a += k.size();
+            size_t b = chunk.find('"', a);
+            return (b == std::string::npos) ? "" : chunk.substr(a, b - a);
+        };
+        std::string fn = attr("fullname");
+        p.id = (fn.find("t3_") == 0) ? fn.substr(3) : fn;
+        p.author = attr("author");
+        p.subreddit = attr("subreddit");
+        p.url = attr("url");
+        p.permalink = attr("permalink");
+        p.domain = attr("domain");
+        p.score = std::atoi(attr("score").c_str());
+        p.numComments = std::atoi(attr("comments-count").c_str());
+        p.over18 = (attr("nsfw") == "true");
+
+        size_t tp = chunk.find("<a class=\"title");
+        if (tp != std::string::npos) {
+            tp = chunk.find(">", tp);
+            if (tp != std::string::npos) {
+                tp++;
+                size_t te = chunk.find("</a>", tp);
+                if (te != std::string::npos) p.title = chunk.substr(tp, te - tp);
+            }
+        }
+        if (!p.title.empty()) posts.push_back(p);
+    }
+    return posts;
 }
