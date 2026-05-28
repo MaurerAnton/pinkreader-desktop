@@ -32,9 +32,12 @@ static std::vector<PostData> parseOldRedditListing(const std::string &html) {
             if (pos == std::string::npos) break;
         }
         found++;
-        // Find end: count nested <div> and </div> from this point
+        // Skip past the opening > of the thing div
+        size_t tagEnd = html.find('>', pos);
+        if (tagEnd == std::string::npos) break;
+        // Find end: count nested <div> and </div>, starting from AFTER thing's opening tag
         int depth = 0;
-        size_t end = pos;
+        size_t end = tagEnd + 1;
         while (end < html.size()) {
             size_t nextOpen = html.find("<div", end);
             size_t nextClose = html.find("</div>", end);
