@@ -6,6 +6,7 @@ class SearchPanel : public wxPanel {
 public:
     SearchPanel(wxWindow *parent);
     std::string getQuery() const;
+    wxButton *getButton();
 
 private:
     wxTextCtrl *input_ = nullptr;

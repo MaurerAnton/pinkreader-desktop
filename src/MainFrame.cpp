@@ -4,11 +4,6 @@
 #include "SearchPanel.h"
 #include "RedditClient.h"
 
-wxBEGIN_EVENT_TABLE(MainFrame, wxFrame)
-    EVT_MENU(wxID_REFRESH, MainFrame::onRefresh)
-    EVT_MENU(wxID_ANY, MainFrame::onLogin)
-wxEND_EVENT_TABLE()
-
 MainFrame::MainFrame(const wxString &title)
     : wxFrame(nullptr, wxID_ANY, title, wxDefaultPosition, wxSize(1024, 700))
 {
@@ -25,23 +20,32 @@ void MainFrame::setupMenu() {
     fileMenu->Append(wxID_REFRESH, "&Refresh\tF5");
     fileMenu->Append(wxID_EXIT, "E&xit\tAlt+X");
     auto *navMenu = new wxMenu();
-    navMenu->Append(wxID_ANY, "Popular", "Browse r/popular");
-    navMenu->Append(wxID_ANY, "All", "Browse r/all");
+    navMenu->Append(ID_MENU_POPULAR, "&Popular", "Browse r/popular");
+    navMenu->Append(ID_MENU_ALL, "&All", "Browse r/all");
     auto *authMenu = new wxMenu();
-    authMenu->Append(wxID_ANY, "&Login...", "OAuth login");
+    authMenu->Append(ID_MENU_LOGIN, "&Login...", "OAuth login");
     menuBar->Append(fileMenu, "&File");
     menuBar->Append(navMenu, "&Navigate");
     menuBar->Append(authMenu, "&Account");
     SetMenuBar(menuBar);
+
+    Bind(wxEVT_MENU, &MainFrame::onRefresh, this, wxID_REFRESH);
+    Bind(wxEVT_MENU, [this](wxCommandEvent &) { Close(true); }, wxID_EXIT);
+    Bind(wxEVT_MENU, &MainFrame::onNavPopular, this, ID_MENU_POPULAR);
+    Bind(wxEVT_MENU, &MainFrame::onNavAll, this, ID_MENU_ALL);
+    Bind(wxEVT_MENU, &MainFrame::onLogin, this, ID_MENU_LOGIN);
 }
 
 void MainFrame::setupLayout() {
     splitter_ = new wxSplitterWindow(this, wxID_ANY, wxDefaultPosition, wxDefaultSize,
                                       wxSP_3D | wxSP_LIVE_UPDATE);
     postList_ = new PostListPanel(splitter_);
+    postList_->getListView()->Bind(wxEVT_LIST_ITEM_SELECTED, &MainFrame::onPostSelected, this);
+
     auto *rightPanel = new wxPanel(splitter_);
     auto *rightSizer = new wxBoxSizer(wxVERTICAL);
     searchPanel_ = new SearchPanel(rightPanel);
+    searchPanel_->getButton()->Bind(wxEVT_BUTTON, &MainFrame::onSearch, this);
     imageView_ = new ImageViewPanel(rightPanel);
     rightSizer->Add(searchPanel_, 0, wxEXPAND | wxALL, 5);
     rightSizer->Add(imageView_, 1, wxEXPAND | wxALL, 5);
@@ -49,7 +53,7 @@ void MainFrame::setupLayout() {
     splitter_->SplitVertically(postList_, rightPanel, 400);
 }
 
-void MainFrame::onSearch(wxCommandEvent &evt) {
+void MainFrame::onSearch(wxCommandEvent &) {
     std::string query = searchPanel_->getQuery();
     if (!query.empty()) loadPosts(query);
 }
@@ -73,6 +77,9 @@ void MainFrame::onLogin(wxCommandEvent &) {
         client_->setToken(token_);
     }
 }
+
+void MainFrame::onNavPopular(wxCommandEvent &) { loadPosts("popular"); }
+void MainFrame::onNavAll(wxCommandEvent &) { loadPosts("all"); }
 
 void MainFrame::loadPosts(const std::string &subreddit, const std::string &sort) {
     currentSub_ = subreddit;

@@ -14,3 +14,5 @@ SearchPanel::SearchPanel(wxWindow *parent)
 std::string SearchPanel::getQuery() const {
     return std::string(input_->GetValue().mb_str());
 }
+
+wxButton *SearchPanel::getButton() { return searchBtn_; }

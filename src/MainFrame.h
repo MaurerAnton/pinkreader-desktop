@@ -1,11 +1,16 @@
 #pragma once
 #include <wx/wx.h>
-#include <wx/stc/stc.h>
 #include <wx/splitter.h>
 #include <wx/listctrl.h>
 #include <memory>
 #include <string>
 #include <vector>
+
+enum {
+    ID_MENU_POPULAR = wxID_HIGHEST + 1,
+    ID_MENU_ALL,
+    ID_MENU_LOGIN,
+};
 
 struct PostData {
     std::string id, title, author, subreddit, url, permalink, domain;
@@ -31,6 +36,8 @@ private:
     void onPostSelected(wxListEvent &evt);
     void onRefresh(wxCommandEvent &evt);
     void onLogin(wxCommandEvent &evt);
+    void onNavPopular(wxCommandEvent &evt);
+    void onNavAll(wxCommandEvent &evt);
     void loadPosts(const std::string &subreddit, const std::string &sort = "hot");
 
     wxSplitterWindow *splitter_ = nullptr;
@@ -41,6 +48,4 @@ private:
     std::vector<PostData> posts_;
     std::string currentSub_;
     std::string token_;
-
-    wxDECLARE_EVENT_TABLE();
 };

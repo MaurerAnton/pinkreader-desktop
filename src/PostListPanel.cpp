@@ -15,6 +15,8 @@ PostListPanel::PostListPanel(wxWindow *parent)
     SetSizer(sizer);
 }
 
+wxListView *PostListPanel::getListView() { return listView_; }
+
 void PostListPanel::setPosts(const std::vector<PostData> &posts) {
     posts_ = posts;
     listView_->DeleteAllItems();
