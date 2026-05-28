@@ -31,6 +31,7 @@ private:
     int reqCount_ = 0;
     int reqPerMin_ = 0;
     time_t minuteStart_ = 0;
+    long lastHttpCode_ = 0;
     void trackRequest();
     static constexpr const char *ANON_BASE = "https://www.reddit.com";
 };

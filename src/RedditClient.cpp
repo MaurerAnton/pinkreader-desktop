@@ -111,7 +111,15 @@ std::vector<PostData> RedditClient::searchPosts(const std::string &query, const 
     std::string url = std::string(ANON_BASE) + "/search.json?q=" + urlEncode(query)
                     + "&type=link&sort=" + sort + "&limit=" + std::to_string(limit) + "&raw_json=1";
     if (!timeFilter.empty()) url += "&t=" + timeFilter;
-    return filterPosts(parseListing(httpGet(url)));
+    auto body = httpGet(url);
+    auto posts = filterPosts(::parseListing(body));
+    if (posts.empty() && lastHttpCode_ == 403) {
+        std::string oldUrl = "https://old.reddit.com/search?q=" + urlEncode(query)
+                           + "&sort=" + sort + "&restrict_sr=off";
+        fprintf(stderr, "[fallback] search 403, trying old.reddit.com\n"); fflush(stderr);
+        posts = filterPosts(parseOldRedditListing(httpGet(oldUrl)));
+    }
+    return posts;
 }
 
 std::vector<PostData> RedditClient::fetchPosts(const std::string &sub, const std::string &sort, int limit) {
@@ -119,11 +127,9 @@ std::vector<PostData> RedditClient::fetchPosts(const std::string &sub, const std
                     + ".json?limit=" + std::to_string(limit) + "&raw_json=1";
     auto body = httpGet(url);
     auto posts = filterPosts(::parseListing(body));
-
-    // Fallback: try old.reddit.com if JSON API returned 403
-    if (posts.empty() && !body.empty() && body[0] != '{') {
+    if (posts.empty() && lastHttpCode_ == 403) {
         std::string oldUrl = buildOldRedditUrl(sub, sort);
-        fprintf(stderr, "[fallback] trying old.reddit.com: %s\n", oldUrl.c_str()); fflush(stderr);
+        fprintf(stderr, "[fallback] HTTP 403, trying old.reddit.com\n"); fflush(stderr);
         auto oldBody = httpGet(oldUrl);
         posts = filterPosts(parseOldRedditListing(oldBody));
     }
@@ -167,6 +173,7 @@ std::string RedditClient::httpGet(const std::string &url) {
     }
     long code = 0;
     curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &code);
+    lastHttpCode_ = code;
     fprintf(stderr, "[httpGet] HTTP %ld, %zu bytes\n", code, body.size()); fflush(stderr);
     curl_easy_cleanup(curl);
     trackRequest();
