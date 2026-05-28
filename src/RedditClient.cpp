@@ -20,6 +20,43 @@ static std::string buildOldRedditUrl(const std::string &sub, const std::string &
     return "https://old.reddit.com/r/" + sub + "/" + sort + "/";
 }
 
+static std::vector<std::string> parseOldRedditSubreddits(const std::string &html) {
+    std::vector<std::string> names;
+    size_t pos = 0;
+    while (true) {
+        pos = html.find("<div class=\" thing", pos);
+        if (pos == std::string::npos) { pos = html.find("<div class=\"thing", pos); if (pos == std::string::npos) break; }
+        size_t tagEnd = html.find('>', pos);
+        if (tagEnd == std::string::npos) break;
+        // Find matching </div>
+        int depth = 0;
+        size_t end = tagEnd + 1;
+        while (end < html.size()) {
+            size_t no = html.find("<div", end);
+            size_t nc = html.find("</div>", end);
+            if (nc == std::string::npos) break;
+            if (no != std::string::npos && no < nc) { end = no + 4; depth++; }
+            else { if (depth == 0) { end = nc + 6; break; } end = nc + 6; depth--; }
+        }
+        std::string chunk = html.substr(pos, end - pos);
+        pos = end;
+        // Extract subreddit name from <a class="title may-blank" href="/r/...">name</a>
+        size_t tp = chunk.find("<a class=\"title");
+        if (tp != std::string::npos) {
+            tp = chunk.find(">", tp);
+            if (tp != std::string::npos) {
+                tp++;
+                size_t te = chunk.find("</a>", tp);
+                if (te != std::string::npos) {
+                    std::string name = chunk.substr(tp, te - tp);
+                    if (!name.empty()) names.push_back(name);
+                }
+            }
+        }
+    }
+    return names;
+}
+
 static std::vector<PostData> parseOldRedditListing(const std::string &html) {
     std::vector<PostData> posts;
     size_t pos = 0;
@@ -118,7 +155,14 @@ static std::string urlEncode(const std::string &s) {
 std::vector<std::string> RedditClient::searchSubreddits(const std::string &query, const std::string &sort, int limit) {
     std::string url = std::string(ANON_BASE) + "/subreddits/search.json?q=" + urlEncode(query)
                     + "&sort=" + sort + "&limit=" + std::to_string(limit) + "&raw_json=1";
-    return parseSubredditNames(httpGet(url));
+    auto names = parseSubredditNames(httpGet(url));
+    if (names.empty() && lastHttpCode_ == 403) {
+        std::string oldUrl = "https://old.reddit.com/subreddits/search?q=" + urlEncode(query);
+        fprintf(stderr, "[fallback] sub search 403, trying old.reddit.com\n"); fflush(stderr);
+        names = parseOldRedditSubreddits(httpGet(oldUrl));
+        if (!names.empty()) fallbackUsed_ = true;
+    }
+    return names;
 }
 
 std::vector<std::string> RedditClient::parseSubredditNames(const std::string &body) {
