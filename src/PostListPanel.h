@@ -1,0 +1,15 @@
+#pragma once
+#include <wx/wx.h>
+#include <wx/listctrl.h>
+#include <vector>
+#include "MainFrame.h"
+
+class PostListPanel : public wxPanel {
+public:
+    PostListPanel(wxWindow *parent);
+    void setPosts(const std::vector<PostData> &posts);
+
+private:
+    wxListView *listView_ = nullptr;
+    std::vector<PostData> posts_;
+};
