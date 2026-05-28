@@ -25,8 +25,12 @@ static std::vector<PostData> parseOldRedditListing(const std::string &html) {
     size_t pos = 0;
     int found = 0;
     while (true) {
-        pos = html.find("<div class=\"thing", pos);
-        if (pos == std::string::npos) break;
+        pos = html.find("<div class=\" thing", pos);
+        if (pos == std::string::npos) {
+            // Try alternative patterns
+            pos = html.find("<div class=\"thing", pos);
+            if (pos == std::string::npos) break;
+        }
         found++;
         // Find end: count nested <div> and </div> from this point
         int depth = 0;
