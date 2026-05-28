@@ -26,9 +26,21 @@ static std::vector<PostData> parseOldRedditListing(const std::string &html) {
     while (true) {
         pos = html.find("<div class=\"thing", pos);
         if (pos == std::string::npos) break;
-        size_t end = html.find("</div>", pos + 200);
-        if (end == std::string::npos) break;
-        std::string chunk = html.substr(pos, end - pos + 6);
+        // Find end: count nested <div> and </div> from this point
+        int depth = 0;
+        size_t end = pos;
+        while (end < html.size()) {
+            size_t nextOpen = html.find("<div", end);
+            size_t nextClose = html.find("</div>", end);
+            if (nextClose == std::string::npos) break;
+            if (nextOpen != std::string::npos && nextOpen < nextClose) {
+                end = nextOpen + 4; depth++;
+            } else {
+                if (depth == 0) { end = nextClose + 6; break; }
+                end = nextClose + 6; depth--;
+            }
+        }
+        std::string chunk = html.substr(pos, end - pos);
         pos = end;
 
         PostData p;
