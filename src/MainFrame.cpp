@@ -95,8 +95,9 @@ void MainFrame::doSearch(const SearchParams &params) {
         SetTitle("PinkReader Desktop");
         posts_ = posts;
         postList_->setPosts(posts_);
-        wxLogStatus(wxString::Format("r/%s - %zu posts | API: %d/%d",
-                      params.query, posts_.size(), client_->requestCount(), RedditClient::RATE_LIMIT));
+        wxLogStatus(wxString::Format("r/%s - %zu posts | API: %d/%d%s",
+                      params.query, posts_.size(), client_->requestCount(), RedditClient::RATE_LIMIT,
+                      client_->fallbackUsed() ? " (via old.reddit.com)" : ""));
     }
 }
 
@@ -131,6 +132,7 @@ void MainFrame::loadPosts(const std::string &subreddit, const std::string &sort)
     SetTitle("PinkReader Desktop");
     posts_ = client_->fetchPosts(subreddit, sort, 50);
     postList_->setPosts(posts_);
-    wxLogStatus(wxString::Format("r/%s - %zu posts | API: %d/%d",
-                  subreddit, posts_.size(), client_->requestCount(), RedditClient::RATE_LIMIT));
+    wxLogStatus(wxString::Format("r/%s - %zu posts | API: %d/%d%s",
+                  subreddit, posts_.size(), client_->requestCount(), RedditClient::RATE_LIMIT,
+                  client_->fallbackUsed() ? " (via old.reddit.com)" : ""));
 }

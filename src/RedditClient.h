@@ -16,6 +16,7 @@ public:
                                        const std::string &timeFilter = "", int limit = 25);
     int requestCount() const { return reqCount_; }
     int requestsPerMinute() const { return reqPerMin_; }
+    bool fallbackUsed() const { return fallbackUsed_; }
     static constexpr int RATE_LIMIT = 600;
 
 private:
@@ -32,6 +33,7 @@ private:
     int reqPerMin_ = 0;
     time_t minuteStart_ = 0;
     long lastHttpCode_ = 0;
+    bool fallbackUsed_ = false;
     void trackRequest();
     static constexpr const char *ANON_BASE = "https://www.reddit.com";
 };

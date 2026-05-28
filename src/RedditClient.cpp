@@ -118,6 +118,7 @@ std::vector<PostData> RedditClient::searchPosts(const std::string &query, const 
                            + "&sort=" + sort + "&restrict_sr=off";
         fprintf(stderr, "[fallback] search 403, trying old.reddit.com\n"); fflush(stderr);
         posts = filterPosts(parseOldRedditListing(httpGet(oldUrl)));
+        if (!posts.empty()) fallbackUsed_ = true;
     }
     return posts;
 }
@@ -132,6 +133,7 @@ std::vector<PostData> RedditClient::fetchPosts(const std::string &sub, const std
         fprintf(stderr, "[fallback] HTTP 403, trying old.reddit.com\n"); fflush(stderr);
         auto oldBody = httpGet(oldUrl);
         posts = filterPosts(parseOldRedditListing(oldBody));
+        if (!posts.empty()) fallbackUsed_ = true;
     }
     return posts;
 }
