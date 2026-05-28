@@ -130,7 +130,15 @@ void MainFrame::loadPosts(const std::string &subreddit, const std::string &sort)
     fprintf(stderr, "[loadPosts] %s/%s\n", subreddit.c_str(), sort.c_str()); fflush(stderr);
     currentSub_ = subreddit;
     SetTitle("PinkReader Desktop");
-    posts_ = client_->fetchPosts(subreddit, sort, 50);
+    auto params = searchPanel_->getParams();
+    client_->setBestQuality(params.bestQuality);
+    client_->setDedup(params.dedup);
+    posts_ = client_->fetchPosts(subreddit, sort.empty() ? params.sort : sort,
+                                  params.limit > 0 ? params.limit : 50);
+    if (params.imagesOnly) {
+        posts_.erase(std::remove_if(posts_.begin(), posts_.end(),
+            [](const PostData &p) { return p.postHint != "image"; }), posts_.end());
+    }
     postList_->setPosts(posts_);
     wxLogStatus(wxString::Format("r/%s - %zu posts | API: %d/%d%s",
                   subreddit, posts_.size(), client_->requestCount(), RedditClient::RATE_LIMIT,

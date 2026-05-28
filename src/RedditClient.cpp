@@ -58,6 +58,10 @@ static std::vector<std::string> parseOldRedditSubreddits(const std::string &html
                 if (te != std::string::npos) {
                     std::string name = chunk.substr(tp, te - tp);
                     if (!name.empty()) {
+                        // Strip "r/" prefix and ": description" suffix
+                        if (name.find("r/") == 0) name = name.substr(2);
+                        size_t colon = name.find(':');
+                        if (colon != std::string::npos) name = name.substr(0, colon);
                         names.push_back(name);
                         fprintf(stderr, "[oldreddit-sub] #%d name=%s\n", found, name.c_str()); fflush(stderr);
                     }
