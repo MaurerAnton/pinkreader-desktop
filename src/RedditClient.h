@@ -21,6 +21,8 @@ public:
 private:
     std::string httpGet(const std::string &url);
     std::string bestQualityUrl(const std::string &url);
+    std::vector<std::string> parseSubredditNames(const std::string &body);
+    std::vector<PostData> filterPosts(std::vector<PostData> posts);
     std::string token_;
     bool bestQuality_ = false;
     bool dedup_ = false;
