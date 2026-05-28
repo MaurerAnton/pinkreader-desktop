@@ -2,7 +2,7 @@
 #include <string>
 #include <vector>
 #include <curl/curl.h>
-#include "MainFrame.h"
+#include "PostData.h"
 
 class RedditClient {
 public:
@@ -11,7 +11,6 @@ public:
 
 private:
     std::string httpGet(const std::string &url);
-    PostData parsePost(const std::string &jsonChunk);
     std::string token_;
     static constexpr const char *ANON_BASE = "https://www.reddit.com";
 };

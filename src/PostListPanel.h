@@ -1,8 +1,8 @@
 #pragma once
 #include <wx/wx.h>
 #include <wx/listctrl.h>
+#include "PostData.h"
 #include <vector>
-#include "MainFrame.h"
 
 class PostListPanel : public wxPanel {
 public:
