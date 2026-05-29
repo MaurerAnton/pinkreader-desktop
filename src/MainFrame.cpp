@@ -151,7 +151,7 @@ void MainFrame::onPostSelected(wxListEvent &evt) {
         wxLogStatus(wxString::Format("r/%s - u/%s - %d pts, %d comments%s | %s",
                      p.subreddit.c_str(), p.author.c_str(), p.score, p.numComments,
                      p.over18 ? " NSFW" : "",
-                     p.isGallery ? "gallery" : p.url.c_str()));
+                     ("reddit.com" + p.permalink).c_str()));
     }
 }
 
