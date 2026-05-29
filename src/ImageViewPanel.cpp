@@ -28,8 +28,12 @@ ImageViewPanel::ImageViewPanel(wxWindow *parent)
 }
 
 void ImageViewPanel::onPlayClick(wxCommandEvent &) {
-    if (!lastVideoUrl_.empty())
-        wxExecute("mpv " + wxString::FromUTF8(lastVideoUrl_));
+    if (!lastVideoUrl_.empty()) {
+        if (wxFileExists("/usr/bin/mpv") || wxFileExists("/usr/local/bin/mpv"))
+            wxExecute("mpv " + wxString::FromUTF8(lastVideoUrl_));
+        else
+            wxLaunchDefaultBrowser(wxString::FromUTF8(lastVideoUrl_));
+    }
 }
 
 void ImageViewPanel::showVideoInfo(const std::string &url, const std::string &caption) {
