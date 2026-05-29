@@ -276,6 +276,20 @@ static std::vector<PostData> parseOldRedditListing(const std::string &html) {
             }
         }
         fprintf(stderr, "[oldreddit] title=%.60s\n", p.title.c_str()); fflush(stderr);
+        // Detect post type from URL/thumbnail for images-only filter
+        if (p.url.find(".jpg") != std::string::npos ||
+            p.url.find(".jpeg") != std::string::npos ||
+            p.url.find(".png") != std::string::npos ||
+            p.url.find(".gif") != std::string::npos ||
+            p.url.find(".webp") != std::string::npos ||
+            p.url.find("i.redd.it") != std::string::npos)
+            p.postHint = "image";
+        else if (p.url.find("v.redd.it") != std::string::npos)
+            p.postHint = "hosted:video";
+        else if (p.url.find("/r/") == 0 || p.url.find("/user/") == 0)
+            p.postHint = "self";
+        else if (p.url.find("http") == 0)
+            p.postHint = "link";
         if (!p.title.empty()) posts.push_back(p);
     }
     fprintf(stderr, "[oldreddit] found %d things, %zu posts with titles\n", found, posts.size()); fflush(stderr);
