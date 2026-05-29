@@ -8,6 +8,7 @@
 #include <fstream>
 #include <wx/clipbrd.h>
 #include <wx/utils.h>
+#include <wx/filename.h>
 
 MainFrame::MainFrame(const wxString &title)
     : wxFrame(nullptr, wxID_ANY, title, wxDefaultPosition, wxSize(1024, 700))
@@ -190,7 +191,7 @@ bool MainFrame::isVideoPost(const PostData &p) const {
 void MainFrame::loadHistory() {
     const char *xdg = getenv("XDG_CONFIG_HOME");
     std::string dir = xdg ? std::string(xdg) + "/pinkreader" : std::string(getenv("HOME")) + "/.config/pinkreader";
-    wxMkdir(wxString::FromUTF8(dir), 0700);
+    wxFileName::Mkdir(wxString::FromUTF8(dir), 0700, wxPATH_MKDIR_FULL);
     historyFile_ = dir + "/history";
     std::ifstream f(historyFile_);
     if (!f) return;
