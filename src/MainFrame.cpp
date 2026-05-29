@@ -17,6 +17,13 @@ MainFrame::MainFrame(const wxString &title)
     setupMenu();
     setupLayout();
     CreateStatusBar();
+    // Double-click status bar to copy its text
+    GetStatusBar()->Bind(wxEVT_LEFT_DCLICK, [this](wxMouseEvent &) {
+        if (wxTheClipboard->Open()) {
+            wxTheClipboard->SetData(new wxTextDataObject(GetStatusBar()->GetStatusText()));
+            wxTheClipboard->Close();
+        }
+    });
     loadHistory();
     searchPanel_->setHistory(history_);
     loadPosts("popular", "hot");
@@ -66,11 +73,8 @@ void MainFrame::setupLayout() {
     rateGauge_ = new wxGauge(rightPanel, wxID_ANY, RedditClient::RATE_LIMIT,
                               wxDefaultPosition, wxSize(-1, 12), wxGA_HORIZONTAL);
     rateGauge_->SetValue(0);
-    statsText_ = new wxTextCtrl(rightPanel, wxID_ANY, "Click here + Ctrl+C to copy",
-                                 wxDefaultPosition, wxSize(-1, 40),
-                                 wxTE_READONLY | wxTE_MULTILINE);
-    statsText_->SetFont(wxFont(9, wxFONTFAMILY_TELETYPE, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_NORMAL));
-    statsText_->SetBackgroundColour(wxColour(245, 245, 245));
+    statsText_ = new wxStaticText(rightPanel, wxID_ANY, "");
+    statsText_->SetFont(wxFont(8, wxFONTFAMILY_TELETYPE, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_NORMAL));
     rightSizer->Add(searchPanel_, 0, wxEXPAND | wxALL, 5);
     rightSizer->Add(imageView_, 1, wxEXPAND | wxALL, 5);
     rightSizer->Add(rateGauge_, 0, wxEXPAND | wxLEFT | wxRIGHT, 5);
@@ -176,7 +180,7 @@ void MainFrame::onPostSelected(wxListEvent &evt) {
                      p.isGallery ? "gallery" : p.url);
         wxLogStatus(info);
         // Also show in statsText so it can be copied
-        statsText_->ChangeValue(wxString::Format("%s | %s", info, statsInfo_));
+        statsText_->SetLabel(wxString::Format("%s | %s", info, statsInfo_));
     }
 }
 
@@ -291,7 +295,7 @@ void MainFrame::updateStats() {
         client_->requestCount(), RedditClient::RATE_LIMIT,
         client_->requestsPerMinute(), client_->lastHttpCode(),
         client_->fallbackUsed() ? "old.reddit" : "api.reddit").ToStdString();
-    statsText_->ChangeValue(wxString::FromUTF8(statsInfo_));
+    statsText_->SetLabel(wxString::FromUTF8(statsInfo_));
     rateGauge_->Refresh();
     statsText_->Refresh();
 }
