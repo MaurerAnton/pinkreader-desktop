@@ -200,16 +200,24 @@ void MainFrame::loadHistory() {
     if (!f) return;
     std::string line;
     while (std::getline(f, line)) {
-        if (!line.empty()) history_.push_back(line);
+        if (line.empty()) continue;
+        // New format: timestamp:entry, old format: just entry
+        size_t colon = line.find(':');
+        if (colon != std::string::npos && colon < 15) {
+            history_.push_back(line.substr(colon + 1));
+        } else {
+            history_.push_back(line); // old format
+        }
     }
 }
-
 void MainFrame::saveHistory() {
     std::ofstream f(historyFile_);
     if (!f) return;
     size_t start = history_.size() > 200 ? history_.size() - 200 : 0;
-    for (size_t i = start; i < history_.size(); i++)
-        f << history_[i] << "\n";
+    for (size_t i = start; i < history_.size(); i++) {
+        // Format: timestamp:entry
+        f << std::time(nullptr) << ":" << history_[i] << "\n";
+    }
 }
 
 void MainFrame::addToHistory(const std::string &entry) {
