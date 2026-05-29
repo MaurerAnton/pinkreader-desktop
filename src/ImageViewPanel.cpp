@@ -150,7 +150,23 @@ void ImageViewPanel::showImage(const std::string &url, const std::string &captio
     if (data.empty()) { status_->SetLabel("Failed to download"); return; }
 
     wxMemoryInputStream mis(data.data(), data.size());
-    wxImage img(mis, wxBITMAP_TYPE_ANY);
+    wxImage img;
+    // Try auto-detect first
+    if (!img.LoadFile(mis, wxBITMAP_TYPE_ANY)) {
+        // Fallback: try common formats explicitly
+        wxMemoryInputStream mis2(data.data(), data.size());
+        if (!img.LoadFile(mis2, wxBITMAP_TYPE_JPEG)) {
+            wxMemoryInputStream mis3(data.data(), data.size());
+            if (!img.LoadFile(mis3, wxBITMAP_TYPE_PNG)) {
+                wxMemoryInputStream mis4(data.data(), data.size());
+                if (!img.LoadFile(mis4, wxBITMAP_TYPE_GIF)) {
+                    status_->SetLabel("Unknown format (" + wxString::Format("%zu", data.size()) + "b) "
+                                     + wxString::FromAscii(url.c_str()).Mid(0, 60));
+                    return;
+                }
+            }
+        }
+    }
     if (!img.IsOk()) {
         status_->SetLabel("Failed to decode (" + wxString::Format("%zu", data.size()) + " bytes)");
         return;
