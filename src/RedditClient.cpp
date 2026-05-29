@@ -117,7 +117,8 @@ static std::vector<PostData> parseOldRedditSearchResults(const std::string &html
         p.over18 = (attr("nsfw") == "true");
 
         // Extract title from <a class="search-title">
-        size_t tp = chunk.find("class=\"search-title\"");
+        size_t tp = chunk.find("search-title");
+        fprintf(stderr, "[searchresult] search-title at=%zu\n", tp); fflush(stderr);
         if (tp != std::string::npos) {
             tp = chunk.find(">", tp);
             if (tp != std::string::npos) {
