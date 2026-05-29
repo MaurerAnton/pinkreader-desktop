@@ -345,6 +345,7 @@ std::vector<PostData> RedditClient::fetchPosts(const std::string &sub, const std
 }
 
 std::vector<PostData> RedditClient::filterPosts(std::vector<PostData> posts) {
+    fprintf(stderr, "[filterPosts] in=%zu\n", posts.size()); fflush(stderr);
     for (auto &p : posts) {
         if (bestQuality_) p.url = bestQualityUrl(p.url);
         if (dedup_ && seenPosts_.count(p.id)) { p.id.clear(); continue; }
@@ -352,6 +353,7 @@ std::vector<PostData> RedditClient::filterPosts(std::vector<PostData> posts) {
     }
     posts.erase(std::remove_if(posts.begin(), posts.end(),
                 [](const PostData &p) { return p.id.empty(); }), posts.end());
+    fprintf(stderr, "[filterPosts] out=%zu\n", posts.size()); fflush(stderr);
     return posts;
 }
 
