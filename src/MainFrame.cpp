@@ -106,7 +106,10 @@ void MainFrame::onPostSelected(wxListEvent &evt) {
     int idx = evt.GetIndex();
     if (idx >= 0 && idx < (int)posts_.size()) {
         auto &p = posts_[idx];
-        imageView_->showImage(p.url, p.title);
+        if (isVideoPost(p))
+            imageView_->showVideoInfo(p.url, p.title);
+        else
+            imageView_->showImage(p.url, p.title);
         wxLogStatus(wxString::Format("r/%s - u/%s - %d pts, %d comments",
                      p.subreddit.c_str(), p.author.c_str(), p.score, p.numComments));
     }
