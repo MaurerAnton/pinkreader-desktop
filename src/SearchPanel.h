@@ -15,6 +15,7 @@ struct SearchParams {
     bool bestQuality = false;
     bool dedup = false;
     bool imagesOnly = false;
+    bool useTor = false;
 };
 
 class SearchPanel : public wxPanel {
@@ -22,6 +23,7 @@ public:
     SearchPanel(wxWindow *parent);
     SearchParams getParams() const;
     wxButton *getSearchButton() { return searchBtn_; }
+    wxCheckBox *getTorCheck() { return torCheck_; }
 
 private:
     wxTextCtrl *input_ = nullptr;
@@ -34,5 +36,6 @@ private:
     wxCheckBox *bestQualityCheck_ = nullptr;
     wxCheckBox *dedupCheck_ = nullptr;
     wxCheckBox *imagesOnlyCheck_ = nullptr;
+    wxCheckBox *torCheck_ = nullptr;
     wxButton *searchBtn_ = nullptr;
 };

@@ -14,6 +14,7 @@ enum {
     ID_MENU_POPULAR = wxID_HIGHEST + 1,
     ID_MENU_ALL,
     ID_MENU_LOGIN,
+    ID_MENU_TOR,
     ID_CTX_OPEN_BROWSER,
     ID_CTX_OPEN_VIDEO,
     ID_CTX_COPY_LINK,
@@ -37,6 +38,7 @@ private:
     void onPostSelected(wxListEvent &evt);
     void onRefresh(wxCommandEvent &evt);
     void onLogin(wxCommandEvent &evt);
+    void onTorProxy(wxCommandEvent &evt);
     void onNavPopular(wxCommandEvent &evt);
     void onNavAll(wxCommandEvent &evt);
     void onContextMenu(wxListEvent &evt);

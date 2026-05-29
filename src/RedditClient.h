@@ -10,6 +10,8 @@ public:
     void setToken(const std::string &tok) { token_ = tok; }
     void setBestQuality(bool v) { bestQuality_ = v; }
     void setDedup(bool v) { dedup_ = v; }
+    void setProxy(const std::string &host, int port, bool socks = true);
+    void setTorProxy();
     std::vector<PostData> fetchPosts(const std::string &sub, const std::string &sort, int limit = 25);
     std::vector<std::string> searchSubreddits(const std::string &query, const std::string &sort, int limit = 10);
     std::vector<PostData> searchPosts(const std::string &query, const std::string &sort,
@@ -27,6 +29,9 @@ private:
     std::vector<std::string> parseSubredditNames(const std::string &body);
     std::vector<PostData> filterPosts(std::vector<PostData> posts);
     std::string token_;
+    std::string proxyHost_;
+    int proxyPort_ = 0;
+    bool proxySocks_ = true;
     bool bestQuality_ = false;
     bool dedup_ = false;
     std::set<std::string> seenPosts_;

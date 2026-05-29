@@ -315,6 +315,14 @@ std::string RedditClient::resolveVideoUrl(const std::string &url) {
     return (result.find("http") == 0) ? result : "";
 }
 
+void RedditClient::setProxy(const std::string &host, int port, bool socks) {
+    proxyHost_ = host; proxyPort_ = port; proxySocks_ = socks;
+}
+
+void RedditClient::setTorProxy() {
+    proxyHost_ = "127.0.0.1"; proxyPort_ = 9050; proxySocks_ = true;
+}
+
 std::string RedditClient::httpGet(const std::string &url) {
     fprintf(stderr, "[httpGet] %s\n", url.c_str()); fflush(stderr);
     std::string body;
@@ -330,6 +338,15 @@ std::string RedditClient::httpGet(const std::string &url) {
     curl_easy_setopt(curl, CURLOPT_TIMEOUT, 30L);
     curl_easy_setopt(curl, CURLOPT_USERAGENT, "PinkReader-Desktop/0.1");
     curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1L);
+    // Proxy support
+    if (proxyPort_ > 0) {
+        curl_easy_setopt(curl, CURLOPT_PROXY, proxyHost_.c_str());
+        curl_easy_setopt(curl, CURLOPT_PROXYPORT, (long)proxyPort_);
+        curl_easy_setopt(curl, CURLOPT_PROXYTYPE,
+                          proxySocks_ ? CURLPROXY_SOCKS5_HOSTNAME : CURLPROXY_HTTP);
+        fprintf(stderr, "[httpGet] using proxy %s:%d (%s)\n",
+                proxyHost_.c_str(), proxyPort_, proxySocks_ ? "socks5h" : "http"); fflush(stderr);
+    }
     if (!token_.empty()) {
         struct curl_slist *h = nullptr;
         h = curl_slist_append(h, ("Authorization: Bearer " + token_).c_str());

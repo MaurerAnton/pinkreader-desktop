@@ -52,11 +52,13 @@ SearchPanel::SearchPanel(wxWindow *parent)
     minImgSpin_ = new wxSpinCtrl(this, wxID_ANY, "3", wxDefaultPosition, wxSize(50, -1),
                                   wxSP_ARROW_KEYS, 1, 50, 3);
     nsfwCheck_ = new wxCheckBox(this, wxID_ANY, "NSFW");
+    torCheck_ = new wxCheckBox(this, wxID_ANY, "Tor");
     row3->Add(bestQualityCheck_, 0, wxALL, 2);
     row3->Add(dedupCheck_, 0, wxALL, 2);
     row3->Add(imagesOnlyCheck_, 0, wxALL, 2);
     row3->Add(minImgSpin_, 0, wxALL, 2);
     row3->Add(nsfwCheck_, 0, wxALL, 2);
+    row3->Add(torCheck_, 0, wxALL, 2);
     sizer->Add(row3, 0, wxEXPAND | wxALL, 2);
 
     SetSizer(sizer);
@@ -75,5 +77,6 @@ SearchParams SearchPanel::getParams() const {
     p.dedup = dedupCheck_->GetValue();
     p.imagesOnly = imagesOnlyCheck_->GetValue();
     p.minImages = minImgSpin_->GetValue();
+    p.useTor = torCheck_->GetValue();
     return p;
 }

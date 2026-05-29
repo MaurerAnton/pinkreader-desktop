@@ -28,6 +28,7 @@ void MainFrame::setupMenu() {
     navMenu->Append(ID_MENU_ALL, "&All", "Browse r/all");
     auto *authMenu = new wxMenu();
     authMenu->Append(ID_MENU_LOGIN, "&Login...", "OAuth login");
+    authMenu->Append(ID_MENU_TOR, "&Tor Proxy", "Route through Tor (127.0.0.1:9050)");
     menuBar->Append(fileMenu, "&File");
     menuBar->Append(navMenu, "&Navigate");
     menuBar->Append(authMenu, "&Account");
@@ -38,6 +39,7 @@ void MainFrame::setupMenu() {
     Bind(wxEVT_MENU, &MainFrame::onNavPopular, this, ID_MENU_POPULAR);
     Bind(wxEVT_MENU, &MainFrame::onNavAll, this, ID_MENU_ALL);
     Bind(wxEVT_MENU, &MainFrame::onLogin, this, ID_MENU_LOGIN);
+    Bind(wxEVT_MENU, &MainFrame::onTorProxy, this, ID_MENU_TOR);
     Bind(wxEVT_MENU, &MainFrame::onCtxOpenBrowser, this, ID_CTX_OPEN_BROWSER);
     Bind(wxEVT_MENU, &MainFrame::onCtxOpenVideo, this, ID_CTX_OPEN_VIDEO);
     Bind(wxEVT_MENU, &MainFrame::onCtxCopyLink, this, ID_CTX_COPY_LINK);
@@ -81,6 +83,7 @@ void MainFrame::onSearch(wxCommandEvent &) {
 void MainFrame::doSearch(const SearchParams &params) {
     client_->setBestQuality(params.bestQuality);
     client_->setDedup(params.dedup);
+    if (params.useTor) client_->setTorProxy();
     if (params.type == "subs") {
         auto subs = client_->searchSubreddits(params.query, params.sort, params.limit);
         // Images-only: probe each subreddit for image content
@@ -250,6 +253,12 @@ void MainFrame::onLogin(wxCommandEvent &) {
     }
 }
 
+void MainFrame::onTorProxy(wxCommandEvent &) {
+    client_->setTorProxy();
+    updateStats();
+    wxLogStatus("Tor proxy enabled (127.0.0.1:9050 SOCKS5)");
+}
+
 void MainFrame::onNavPopular(wxCommandEvent &) { loadPosts("popular"); }
 void MainFrame::onNavAll(wxCommandEvent &) { loadPosts("all"); }
 
@@ -259,6 +268,7 @@ void MainFrame::loadPosts(const std::string &subreddit, const std::string &sort)
     auto params = searchPanel_->getParams();
     client_->setBestQuality(params.bestQuality);
     client_->setDedup(params.dedup);
+    if (params.useTor) client_->setTorProxy();
     posts_ = client_->fetchPosts(subreddit, sort.empty() ? params.sort : sort,
                                   params.limit > 0 ? params.limit : 50);
     if (params.imagesOnly) {
