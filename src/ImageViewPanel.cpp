@@ -30,7 +30,7 @@ ImageViewPanel::ImageViewPanel(wxWindow *parent)
     playBtn_->Hide();
     playBtn_->Bind(wxEVT_BUTTON, &ImageViewPanel::onPlayClick, this);
 
-    bitmap_->Bind(wxEVT_MOUSEWHEEL, &ImageViewPanel::onMouseWheel, this);
+    Bind(wxEVT_MOUSEWHEEL, &ImageViewPanel::onMouseWheel, this);
 
     prevBtn_ = new wxButton(this, wxID_ANY, "← Prev");
     prevBtn_->Hide();
