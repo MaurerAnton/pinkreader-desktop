@@ -77,7 +77,9 @@ void MainFrame::setupLayout() {
 }
 
 void MainFrame::onSearch(wxCommandEvent &) {
+    fprintf(stderr, "[onSearch] clicked\n"); fflush(stderr);
     SearchParams params = searchPanel_->getParams();
+    fprintf(stderr, "[onSearch] query=%s type=%s\n", params.query.c_str(), params.type.c_str()); fflush(stderr);
     if (!params.query.empty()) doSearch(params);
 }
 
