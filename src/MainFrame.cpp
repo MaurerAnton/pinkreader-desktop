@@ -88,6 +88,8 @@ void MainFrame::doSearch(const SearchParams &params) {
             std::vector<std::string> imgSubs;
             for (auto &s : subs) {
                 auto posts = client_->fetchPosts(s, "hot", params.minImages * 2);
+                wxYield(); // keep GUI responsive
+                updateStats();
                 int count = 0;
                 for (auto &p : posts) {
                     if (p.postHint == "image" ||
@@ -99,6 +101,7 @@ void MainFrame::doSearch(const SearchParams &params) {
                     }
                 }
                 if (count >= params.minImages) imgSubs.push_back(s);
+                wxLogStatus(wxString::Format("Probing %s... %d images found", s, count));
             }
             subs = imgSubs;
         }
