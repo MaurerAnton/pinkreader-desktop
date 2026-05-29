@@ -77,8 +77,10 @@ static std::vector<PostData> parseOldRedditSearchResults(const std::string &html
     std::vector<PostData> posts;
     size_t pos = 0;
     while (true) {
-        pos = html.find("<div class=\" search-result search-result-link", pos);
+        pos = html.find("search-result-link", pos);
         if (pos == std::string::npos) break;
+        // Backtrack to find the opening <div
+        pos = html.rfind("<div", pos);
         size_t tagEnd = html.find('>', pos);
         if (tagEnd == std::string::npos) break;
         // Find matching </div> (search-result div, not deep nesting)
@@ -117,7 +119,10 @@ static std::vector<PostData> parseOldRedditSearchResults(const std::string &html
                 if (te != std::string::npos) p.title = chunk.substr(tp, te - tp);
             }
         }
-        if (!p.title.empty()) posts.push_back(p);
+        if (!p.title.empty()) {
+            posts.push_back(p);
+            fprintf(stderr, "[searchresult] %s\n", p.title.c_str()); fflush(stderr);
+        }
     }
     return posts;
 }
