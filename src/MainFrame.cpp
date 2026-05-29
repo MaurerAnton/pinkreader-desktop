@@ -114,9 +114,10 @@ void MainFrame::doSearch(const SearchParams &params) {
         SetTitle("PinkReader Desktop");
         posts_ = posts;
         postList_->setPosts(posts_);
-        wxLogStatus(wxString::Format("r/%s - %zu posts | API: %d/%d%s",
+        wxLogStatus(wxString::Format("r/%s - %zu posts | %d/%d req %d/min HTTP %ld%s",
                       params.query, posts_.size(), client_->requestCount(), RedditClient::RATE_LIMIT,
-                      client_->fallbackUsed() ? " (via old.reddit.com)" : ""));
+                      client_->requestsPerMinute(), client_->lastHttpCode(),
+                      client_->fallbackUsed() ? " old" : ""));
     }
 }
 
@@ -130,8 +131,9 @@ void MainFrame::onPostSelected(wxListEvent &evt) {
             imageView_->showGallery(p.galleryUrls, p.title);
         else
             imageView_->showImage(p.url, p.title);
-        wxLogStatus(wxString::Format("r/%s - u/%s - %d pts, %d comments",
-                     p.subreddit.c_str(), p.author.c_str(), p.score, p.numComments));
+        wxLogStatus(wxString::Format("r/%s - u/%s - %d pts, %d comments | %s",
+                     p.subreddit.c_str(), p.author.c_str(), p.score, p.numComments,
+                     p.isGallery ? "gallery" : p.url.c_str()));
     }
 }
 
@@ -242,7 +244,8 @@ void MainFrame::loadPosts(const std::string &subreddit, const std::string &sort)
             }), posts_.end());
     }
     postList_->setPosts(posts_);
-    wxLogStatus(wxString::Format("r/%s - %zu posts | API: %d/%d%s",
+    wxLogStatus(wxString::Format("r/%s - %zu posts | %d/%d req %d/min HTTP %ld%s",
                   subreddit, posts_.size(), client_->requestCount(), RedditClient::RATE_LIMIT,
-                  client_->fallbackUsed() ? " (via old.reddit.com)" : ""));
+                  client_->requestsPerMinute(), client_->lastHttpCode(),
+                  client_->fallbackUsed() ? " old" : ""));
 }

@@ -16,6 +16,7 @@ public:
                                        const std::string &timeFilter = "", int limit = 25);
     int requestCount() const { return reqCount_; }
     int requestsPerMinute() const { return reqPerMin_; }
+    long lastHttpCode() const { return lastHttpCode_; }
     bool fallbackUsed() const { return fallbackUsed_; }
     static constexpr int RATE_LIMIT = 600;
     static std::string resolveVideoUrl(const std::string &url);
