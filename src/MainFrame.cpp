@@ -66,9 +66,11 @@ void MainFrame::setupLayout() {
     rateGauge_ = new wxGauge(rightPanel, wxID_ANY, RedditClient::RATE_LIMIT,
                               wxDefaultPosition, wxSize(-1, 12), wxGA_HORIZONTAL);
     rateGauge_->SetValue(0);
-    statsText_ = new wxTextCtrl(rightPanel, wxID_ANY, "", wxDefaultPosition, wxSize(-1, 40),
+    statsText_ = new wxTextCtrl(rightPanel, wxID_ANY, "Click here + Ctrl+C to copy",
+                                 wxDefaultPosition, wxSize(-1, 40),
                                  wxTE_READONLY | wxTE_MULTILINE);
-    statsText_->SetFont(wxFont(8, wxFONTFAMILY_TELETYPE, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_NORMAL));
+    statsText_->SetFont(wxFont(9, wxFONTFAMILY_TELETYPE, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_NORMAL));
+    statsText_->SetBackgroundColour(wxColour(245, 245, 245));
     rightSizer->Add(searchPanel_, 0, wxEXPAND | wxALL, 5);
     rightSizer->Add(imageView_, 1, wxEXPAND | wxALL, 5);
     rightSizer->Add(rateGauge_, 0, wxEXPAND | wxLEFT | wxRIGHT, 5);
@@ -148,6 +150,7 @@ void MainFrame::doSearch(const SearchParams &params) {
         fprintf(stderr, "[doSearch] got %zu posts, calling setPosts\n", posts_.size()); fflush(stderr);
         postList_->setPosts(posts_);
         updateStats();
+        addToHistory("search:" + params.query);
         wxLogStatus(wxString::Format("r/%s - %zu posts | %d/%d req %d/min HTTP %ld%s",
                       params.query, posts_.size(), client_->requestCount(), RedditClient::RATE_LIMIT,
                       client_->requestsPerMinute(), client_->lastHttpCode(),
