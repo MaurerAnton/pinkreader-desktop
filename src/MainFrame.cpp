@@ -6,6 +6,7 @@
 #include <cstdio>
 #include <algorithm>
 #include <fstream>
+#include <ctime>
 #include <wx/clipbrd.h>
 #include <wx/utils.h>
 #include <wx/filename.h>
