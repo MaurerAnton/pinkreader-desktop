@@ -10,6 +10,7 @@ struct SearchParams {
     std::string sort = "relevance";
     std::string timeFilter;
     int limit = 25;
+    int minImages = 3;        // minimum image posts a subreddit must have
     bool nsfw = false;
     bool bestQuality = false;
     bool dedup = false;
@@ -28,6 +29,7 @@ private:
     wxComboBox *sortBox_ = nullptr;
     wxComboBox *timeBox_ = nullptr;
     wxSpinCtrl *limitSpin_ = nullptr;
+    wxSpinCtrl *minImgSpin_ = nullptr;
     wxCheckBox *nsfwCheck_ = nullptr;
     wxCheckBox *bestQualityCheck_ = nullptr;
     wxCheckBox *dedupCheck_ = nullptr;

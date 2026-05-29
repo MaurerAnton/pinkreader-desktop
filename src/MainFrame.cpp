@@ -87,17 +87,18 @@ void MainFrame::doSearch(const SearchParams &params) {
         if (params.imagesOnly) {
             std::vector<std::string> imgSubs;
             for (auto &s : subs) {
-                auto posts = client_->fetchPosts(s, "hot", 3);
-                bool hasImage = false;
+                auto posts = client_->fetchPosts(s, "hot", params.minImages * 2);
+                int count = 0;
                 for (auto &p : posts) {
                     if (p.postHint == "image" ||
                         p.url.find("i.redd.it") != std::string::npos ||
                         p.url.find(".jpg") != std::string::npos ||
                         p.url.find(".png") != std::string::npos) {
-                        hasImage = true; break;
+                        count++;
+                        if (count >= params.minImages) break;
                     }
                 }
-                if (hasImage) imgSubs.push_back(s);
+                if (count >= params.minImages) imgSubs.push_back(s);
             }
             subs = imgSubs;
         }

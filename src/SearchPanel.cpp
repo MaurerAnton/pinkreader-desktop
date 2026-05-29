@@ -49,10 +49,13 @@ SearchPanel::SearchPanel(wxWindow *parent)
     bestQualityCheck_ = new wxCheckBox(this, wxID_ANY, "Best quality");
     dedupCheck_ = new wxCheckBox(this, wxID_ANY, "Dedup");
     imagesOnlyCheck_ = new wxCheckBox(this, wxID_ANY, "Images only");
+    minImgSpin_ = new wxSpinCtrl(this, wxID_ANY, "3", wxDefaultPosition, wxSize(50, -1),
+                                  wxSP_ARROW_KEYS, 1, 50, 3);
     nsfwCheck_ = new wxCheckBox(this, wxID_ANY, "NSFW");
     row3->Add(bestQualityCheck_, 0, wxALL, 2);
     row3->Add(dedupCheck_, 0, wxALL, 2);
     row3->Add(imagesOnlyCheck_, 0, wxALL, 2);
+    row3->Add(minImgSpin_, 0, wxALL, 2);
     row3->Add(nsfwCheck_, 0, wxALL, 2);
     sizer->Add(row3, 0, wxEXPAND | wxALL, 2);
 
@@ -71,5 +74,6 @@ SearchParams SearchPanel::getParams() const {
     p.bestQuality = bestQualityCheck_->GetValue();
     p.dedup = dedupCheck_->GetValue();
     p.imagesOnly = imagesOnlyCheck_->GetValue();
+    p.minImages = minImgSpin_->GetValue();
     return p;
 }
