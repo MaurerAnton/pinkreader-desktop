@@ -169,22 +169,6 @@ void MainFrame::onPostSelected(wxListEvent &evt) {
     }
 }
 
-void MainFrame::onContextMenu(wxListEvent &evt) {
-    lastContextIdx_ = evt.GetIndex();
-    if (lastContextIdx_ < 0 || lastContextIdx_ >= (int)posts_.size()) return;
-    auto &p = posts_[lastContextIdx_];
-
-    wxMenu menu;
-    menu.Append(ID_CTX_OPEN_BROWSER, "Open in browser");
-    if (isVideoPost(p)) {
-        menu.Append(ID_CTX_OPEN_VIDEO, "Play video (mpv)");
-    }
-    menu.AppendSeparator();
-    menu.Append(ID_CTX_COPY_LINK, "Copy link");
-    menu.Append(ID_CTX_COPY_ID, "Copy post ID");
-    PopupMenu(&menu);
-}
-
 bool MainFrame::isVideoPost(const PostData &p) const {
     if (p.postHint == "hosted:video" || p.postHint == "rich:video") return true;
     if (p.domain == "v.redd.it") return true;
