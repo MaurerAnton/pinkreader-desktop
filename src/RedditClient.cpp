@@ -172,6 +172,17 @@ static std::vector<PostData> parseOldRedditSearchResults(const std::string &html
         fprintf(stderr, "[searchresult] title=%.60s\n", p.title.c_str()); fflush(stderr);
         fprintf(stderr, "[searchresult] id=%s author=%s sub=%s score=%d\n",
                 p.id.c_str(), p.author.c_str(), p.subreddit.c_str(), p.score); fflush(stderr);
+        // Determine post hint from domain/URL for old.reddit fallback
+        if (p.postHint.empty() && !p.url.empty()) {
+            std::string lower = p.url;
+            std::transform(lower.begin(), lower.end(), lower.begin(), ::tolower);
+            if (lower.find(".jpg") != std::string::npos || lower.find(".jpeg") != std::string::npos ||
+                lower.find(".png") != std::string::npos || lower.find(".gif") != std::string::npos)
+                p.postHint = "image";
+            else if (lower.find("v.redd.it") != std::string::npos || lower.find(".mp4") != std::string::npos)
+                p.postHint = "hosted:video";
+            else if (p.isSelf) p.postHint = "self";
+        }
         if (!p.title.empty()) {
             posts.push_back(p);
             fprintf(stderr, "[searchresult] %s\n", p.title.c_str()); fflush(stderr);
