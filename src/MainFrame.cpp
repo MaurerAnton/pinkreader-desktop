@@ -5,6 +5,7 @@
 #include "RedditClient.h"
 #include <cstdio>
 #include <algorithm>
+#include <fstream>
 #include <wx/clipbrd.h>
 #include <wx/utils.h>
 
@@ -15,6 +16,7 @@ MainFrame::MainFrame(const wxString &title)
     setupMenu();
     setupLayout();
     CreateStatusBar();
+    loadHistory();
     loadPosts("popular", "hot");
 }
 
@@ -89,6 +91,7 @@ void MainFrame::doSearch(const SearchParams &params) {
     client_->setDedup(params.dedup);
     if (params.useTor) client_->setTorProxy();
     if (params.type == "subs") {
+        addToHistory("search:" + params.query);
         auto subs = client_->searchSubreddits(params.query, params.sort, params.limit);
         // Usable-only: probe each subreddit for API accessibility
         if (params.usableOnly || params.imagesOnly) {
@@ -193,6 +196,47 @@ bool MainFrame::isVideoPost(const PostData &p) const {
             lower.find("youtu.be") != std::string::npos);
 }
 
+void MainFrame::loadHistory() {
+    const char *xdg = getenv("XDG_CONFIG_HOME");
+    std::string dir = xdg ? std::string(xdg) + "/pinkreader" : std::string(getenv("HOME")) + "/.config/pinkreader";
+    historyFile_ = dir + "/history";
+    std::ifstream f(historyFile_);
+    if (!f) return;
+    std::string line;
+    while (std::getline(f, line)) {
+        if (!line.empty()) history_.push_back(line);
+    }
+}
+
+void MainFrame::saveHistory() {
+    std::ofstream f(historyFile_);
+    if (!f) return;
+    size_t start = history_.size() > 200 ? history_.size() - 200 : 0;
+    for (size_t i = start; i < history_.size(); i++)
+        f << history_[i] << "\n";
+}
+
+void MainFrame::addToHistory(const std::string &entry) {
+    history_.push_back(entry);
+    saveHistory();
+}
+
+void MainFrame::onContextMenu(wxListEvent &evt) {
+    lastContextIdx_ = evt.GetIndex();
+    if (lastContextIdx_ < 0 || lastContextIdx_ >= (int)posts_.size()) return;
+    auto &p = posts_[lastContextIdx_];
+
+    wxMenu menu;
+    menu.Append(ID_CTX_OPEN_BROWSER, "Open in browser");
+    if (isVideoPost(p)) {
+        menu.Append(ID_CTX_OPEN_VIDEO, "Play video (mpv)");
+    }
+    menu.AppendSeparator();
+    menu.Append(ID_CTX_COPY_LINK, "Copy link");
+    menu.Append(ID_CTX_COPY_ID, "Copy post ID");
+    PopupMenu(&menu);
+}
+
 void MainFrame::onCtxOpenBrowser(wxCommandEvent &) {
     if (lastContextIdx_ >= 0 && lastContextIdx_ < (int)posts_.size()) {
         std::string url = "https://www.reddit.com" + posts_[lastContextIdx_].permalink;
@@ -273,6 +317,7 @@ void MainFrame::onNavAll(wxCommandEvent &) { loadPosts("all"); }
 void MainFrame::loadPosts(const std::string &subreddit, const std::string &sort) {
     currentSub_ = subreddit;
     SetTitle("PinkReader Desktop");
+    addToHistory("r/" + subreddit);
     auto params = searchPanel_->getParams();
     client_->setBestQuality(params.bestQuality);
     client_->setDedup(params.dedup);

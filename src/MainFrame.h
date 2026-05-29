@@ -9,6 +9,7 @@
 #include <memory>
 #include <string>
 #include <vector>
+#include <set>
 
 enum {
     ID_MENU_POPULAR = wxID_HIGHEST + 1,
@@ -52,6 +53,9 @@ private:
 
     bool isVideoPost(const PostData &p) const;
     void updateStats();
+    void loadHistory();
+    void saveHistory();
+    void addToHistory(const std::string &entry);
     int lastContextIdx_ = -1;
 
     wxSplitterWindow *splitter_ = nullptr;
@@ -63,6 +67,8 @@ private:
     wxTimer *statsTimer_ = nullptr;
     std::unique_ptr<RedditClient> client_;
     std::vector<PostData> posts_;
+    std::vector<std::string> history_;
     std::string currentSub_;
     std::string token_;
+    std::string historyFile_;
 };
