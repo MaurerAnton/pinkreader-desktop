@@ -24,6 +24,7 @@ public:
     SearchPanel(wxWindow *parent);
     SearchParams getParams() const;
     wxButton *getSearchButton() { return searchBtn_; }
+    wxTextCtrl *getInput() { return input_; }
     wxCheckBox *getTorCheck() { return torCheck_; }
 
 private:

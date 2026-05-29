@@ -57,6 +57,7 @@ void MainFrame::setupLayout() {
     auto *rightSizer = new wxBoxSizer(wxVERTICAL);
     searchPanel_ = new SearchPanel(rightPanel);
     searchPanel_->getSearchButton()->Bind(wxEVT_BUTTON, &MainFrame::onSearch, this);
+    searchPanel_->getInput()->Bind(wxEVT_TEXT_ENTER, &MainFrame::onSearch, this);
     imageView_ = new ImageViewPanel(rightPanel);
     rateGauge_ = new wxGauge(rightPanel, wxID_ANY, RedditClient::RATE_LIMIT,
                               wxDefaultPosition, wxSize(-1, 12), wxGA_HORIZONTAL);
