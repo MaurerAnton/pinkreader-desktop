@@ -30,6 +30,8 @@ ImageViewPanel::ImageViewPanel(wxWindow *parent)
     playBtn_->Hide();
     playBtn_->Bind(wxEVT_BUTTON, &ImageViewPanel::onPlayClick, this);
 
+    bitmap_->Bind(wxEVT_MOUSEWHEEL, &ImageViewPanel::onMouseWheel, this);
+
     prevBtn_ = new wxButton(this, wxID_ANY, "← Prev");
     prevBtn_->Hide();
     prevBtn_->Bind(wxEVT_BUTTON, &ImageViewPanel::onPrevClick, this);
@@ -163,6 +165,7 @@ void ImageViewPanel::showImage(const std::string &url, const std::string &captio
         img.Rescale((int)(img.GetWidth() * s), (int)(img.GetHeight() * s), wxIMAGE_QUALITY_HIGH);
     }
     bitmap_->SetBitmap(wxBitmap(img));
+    baseImage_ = img; zoom_ = 1.0;
     status_->SetLabel(wxString::Format("%dx%d  %.1f KB", img.GetWidth(), img.GetHeight(), data.size() / 1024.0));
     Layout();
 }
@@ -178,6 +181,9 @@ void ImageViewPanel::showGallery(const std::vector<std::string> &urls, const std
     nextBtn_->Show();
     galleryUrls_ = urls;
     galleryIdx_ = 0;
+    fprintf(stderr, "[gallery] %zu images\n", urls.size()); fflush(stderr);
+    for (size_t i = 0; i < urls.size(); i++)
+        fprintf(stderr, "[gallery]   %zu: %s\n", i, urls[i].c_str()); fflush(stderr);
     std::string cleanCaption;
     for (char c : caption) if ((unsigned char)c >= 0x20 && (unsigned char)c < 0x7F) cleanCaption += c;
     caption_->SetLabel(wxString::FromAscii(("[GALLERY " + std::to_string(urls.size()) + "]" + cleanCaption).c_str()));
@@ -216,6 +222,7 @@ void ImageViewPanel::loadGalleryImage(int idx) {
                 img.Rescale((int)(img.GetWidth() * s), (int)(img.GetHeight() * s), wxIMAGE_QUALITY_HIGH);
             }
             bitmap_->SetBitmap(wxBitmap(img));
+            baseImage_ = img; zoom_ = 1.0;
         }
     }
     caption_->SetLabel(wxString::FromAscii(("[GALLERY " + std::to_string(galleryUrls_.size())
@@ -230,4 +237,25 @@ void ImageViewPanel::onPrevClick(wxCommandEvent &) {
 
 void ImageViewPanel::onNextClick(wxCommandEvent &) {
     if (galleryIdx_ < (int)galleryUrls_.size() - 1) loadGalleryImage(galleryIdx_ + 1);
+}
+
+void ImageViewPanel::onMouseWheel(wxMouseEvent &evt) {
+    if (!baseImage_.IsOk()) { evt.Skip(); return; }
+    double oldZoom = zoom_;
+    zoom_ += evt.GetWheelRotation() > 0 ? 0.1 : -0.1;
+    if (zoom_ < 0.1) zoom_ = 0.1;
+    if (zoom_ > 5.0) zoom_ = 5.0;
+    if (zoom_ != oldZoom) applyZoom();
+}
+
+void ImageViewPanel::applyZoom() {
+    if (!baseImage_.IsOk()) return;
+    wxImage scaled = baseImage_;
+    int w = (int)(baseImage_.GetWidth() * zoom_);
+    int h = (int)(baseImage_.GetHeight() * zoom_);
+    if (w > 0 && h > 0) {
+        scaled.Rescale(w, h, wxIMAGE_QUALITY_HIGH);
+        bitmap_->SetBitmap(wxBitmap(scaled));
+        status_->SetLabel(wxString::Format("%dx%d  zoom:%.0f%%", w, h, zoom_ * 100));
+    }
 }

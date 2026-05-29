@@ -14,11 +14,16 @@ private:
     void onPlayClick(wxCommandEvent &evt);
     void onPrevClick(wxCommandEvent &evt);
     void onNextClick(wxCommandEvent &evt);
+    void onMouseWheel(wxMouseEvent &evt);
     void loadGalleryImage(int idx);
+    void applyZoom();
+
     std::string lastVideoUrl_;
     std::string pendingVideoUrl_;
     std::vector<std::string> galleryUrls_;
     int galleryIdx_ = 0;
+    double zoom_ = 1.0;
+    wxImage baseImage_;
 
     wxStaticBitmap *bitmap_ = nullptr;
     wxPanel *videoPanel_ = nullptr;
