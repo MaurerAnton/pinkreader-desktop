@@ -132,6 +132,7 @@ void MainFrame::doSearch(const SearchParams &params) {
         currentSub_ = "search:" + params.query;
         SetTitle("PinkReader Desktop");
         posts_ = posts;
+        fprintf(stderr, "[doSearch] got %zu posts, calling setPosts\n", posts_.size()); fflush(stderr);
         postList_->setPosts(posts_);
         updateStats();
         wxLogStatus(wxString::Format("r/%s - %zu posts | %d/%d req %d/min HTTP %ld%s",
