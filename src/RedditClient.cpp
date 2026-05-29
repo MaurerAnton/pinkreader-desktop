@@ -93,6 +93,8 @@ static std::vector<PostData> parseOldRedditSearchResults(const std::string &html
         std::string chunk = html.substr(pos, end - pos);
         pos = end;
         fprintf(stderr, "[searchresult] chunk %zu bytes\n", chunk.size()); fflush(stderr);
+        // Debug: print first 300 chars of chunk
+        fprintf(stderr, "[searchresult] %.300s\n", chunk.c_str()); fflush(stderr);
 
         PostData p;
         auto attr = [&](const std::string &key) -> std::string {
