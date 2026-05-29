@@ -72,6 +72,56 @@ static std::vector<std::string> parseOldRedditSubreddits(const std::string &html
     return names;
 }
 
+static std::vector<PostData> parseOldRedditSearchResults(const std::string &html) {
+    // Search results use <div class="search-result search-result-link" with data- attrs
+    std::vector<PostData> posts;
+    size_t pos = 0;
+    while (true) {
+        pos = html.find("<div class=\" search-result search-result-link", pos);
+        if (pos == std::string::npos) break;
+        size_t tagEnd = html.find('>', pos);
+        if (tagEnd == std::string::npos) break;
+        // Find matching </div> (search-result div, not deep nesting)
+        size_t end = html.find("</div>", tagEnd);
+        if (end == std::string::npos) break;
+        std::string chunk = html.substr(pos, end - pos + 6);
+        pos = end + 6;
+
+        PostData p;
+        auto attr = [&](const std::string &key) -> std::string {
+            std::string k = "data-" + key + "=\"";
+            size_t a = chunk.find(k);
+            if (a == std::string::npos) return "";
+            a += k.size();
+            size_t b = chunk.find('"', a);
+            return (b == std::string::npos) ? "" : chunk.substr(a, b - a);
+        };
+        p.id = attr("fullname");
+        if (p.id.find("t3_") == 0) p.id = p.id.substr(3);
+        p.author = attr("author");
+        p.subreddit = attr("subreddit");
+        p.url = attr("url");
+        p.permalink = attr("permalink");
+        p.domain = attr("domain");
+        p.score = std::atoi(attr("score").c_str());
+        p.numComments = std::atoi(attr("comments-count").c_str());
+        p.over18 = (attr("nsfw") == "true");
+
+        // Extract title from <a class="search-title">
+        size_t tp = chunk.find("class=\"search-title\"");
+        if (tp != std::string::npos) {
+            tp = chunk.find(">", tp);
+            if (tp != std::string::npos) {
+                tp++;
+                size_t te = chunk.find("</a>", tp);
+                if (te != std::string::npos) p.title = chunk.substr(tp, te - tp);
+            }
+        }
+        if (!p.title.empty()) posts.push_back(p);
+    }
+    return posts;
+}
+
 static std::vector<PostData> parseOldRedditListing(const std::string &html) {
     std::vector<PostData> posts;
     size_t pos = 0;
@@ -199,6 +249,14 @@ std::vector<PostData> RedditClient::searchPosts(const std::string &query, const 
     if (!timeFilter.empty()) url += "&t=" + timeFilter;
     auto body = httpGet(url);
     auto posts = filterPosts(::parseListing(body));
+    if (posts.empty() && (lastHttpCode_ == 403 || lastHttpCode_ == 429)) {
+        std::string oldUrl = "https://old.reddit.com/search?q=" + urlEncode(query)
+                           + "&sort=" + sort + "&restrict_sr=off";
+        fprintf(stderr, "[fallback] search %ld, trying old.reddit.com\n", lastHttpCode_); fflush(stderr);
+        auto oldBody = httpGet(oldUrl);
+        posts = filterPosts(parseOldRedditSearchResults(oldBody));
+        if (!posts.empty()) fallbackUsed_ = true;
+    }
     return posts;
 }
 
