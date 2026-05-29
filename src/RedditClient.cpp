@@ -79,15 +79,18 @@ static std::vector<PostData> parseOldRedditSearchResults(const std::string &html
     while (true) {
         pos = html.find("search-result-link", pos);
         if (pos == std::string::npos) break;
-        // Backtrack to find the opening <div
         pos = html.rfind("<div", pos);
         size_t tagEnd = html.find('>', pos);
         if (tagEnd == std::string::npos) break;
-        // Find matching </div> (search-result div, not deep nesting)
-        size_t end = html.find("</div>", tagEnd);
+        // Find next search-result or </div> after this div
+        size_t next = html.find("search-result", tagEnd);
+        size_t endDiv = html.find("</div>", tagEnd);
+        size_t end = std::min(next != std::string::npos ? next : std::string::npos,
+                              endDiv != std::string::npos ? endDiv : std::string::npos);
         if (end == std::string::npos) break;
-        std::string chunk = html.substr(pos, end - pos + 6);
-        pos = end + 6;
+        std::string chunk = html.substr(pos, end - pos);
+        pos = end;
+        fprintf(stderr, "[searchresult] chunk %zu bytes\n", chunk.size()); fflush(stderr);
 
         PostData p;
         auto attr = [&](const std::string &key) -> std::string {
