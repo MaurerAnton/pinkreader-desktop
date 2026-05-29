@@ -190,9 +190,38 @@ void ImageViewPanel::loadGalleryImage(int idx) {
     std::string url = galleryUrls_[idx];
     size_t q = url.find('?');
     if (q != std::string::npos) url = url.substr(0, q);
-    showImage(url, "");
+    // Download and display without calling showImage (which hides gallery controls)
+    std::vector<uint8_t> data;
+    auto *curl = curl_easy_init();
+    if (curl) {
+        curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
+        curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, curlWrite);
+        curl_easy_setopt(curl, CURLOPT_WRITEDATA, &data);
+        curl_easy_setopt(curl, CURLOPT_TIMEOUT, 15L);
+        curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1L);
+        curl_easy_setopt(curl, CURLOPT_USERAGENT, "PinkReader-Desktop/0.1");
+        curl_easy_perform(curl);
+        curl_easy_cleanup(curl);
+    }
+    if (!data.empty()) {
+        wxMemoryInputStream mis(data.data(), data.size());
+        wxImage img(mis, wxBITMAP_TYPE_ANY);
+        if (img.IsOk()) {
+            int maxW = bitmap_->GetSize().GetWidth() - 10;
+            int maxH = bitmap_->GetSize().GetHeight() - 10;
+            if (maxW < 50) maxW = 400;
+            if (maxH < 50) maxH = 300;
+            if (img.GetWidth() > maxW || img.GetHeight() > maxH) {
+                double s = std::min((double)maxW / img.GetWidth(), (double)maxH / img.GetHeight());
+                img.Rescale((int)(img.GetWidth() * s), (int)(img.GetHeight() * s), wxIMAGE_QUALITY_HIGH);
+            }
+            bitmap_->SetBitmap(wxBitmap(img));
+        }
+    }
     caption_->SetLabel(wxString::FromAscii(("[GALLERY " + std::to_string(galleryUrls_.size())
                       + "/" + std::to_string(idx + 1) + "]").c_str()));
+    status_->SetLabel(wxString::Format("Image %d/%zu", idx + 1, galleryUrls_.size()));
+    Layout();
 }
 
 void ImageViewPanel::onPrevClick(wxCommandEvent &) {
