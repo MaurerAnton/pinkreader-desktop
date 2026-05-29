@@ -53,12 +53,14 @@ SearchPanel::SearchPanel(wxWindow *parent)
                                   wxSP_ARROW_KEYS, 1, 50, 3);
     nsfwCheck_ = new wxCheckBox(this, wxID_ANY, "NSFW");
     torCheck_ = new wxCheckBox(this, wxID_ANY, "Tor");
+    usableCheck_ = new wxCheckBox(this, wxID_ANY, "Usable");
     row3->Add(bestQualityCheck_, 0, wxALL, 2);
     row3->Add(dedupCheck_, 0, wxALL, 2);
     row3->Add(imagesOnlyCheck_, 0, wxALL, 2);
     row3->Add(minImgSpin_, 0, wxALL, 2);
     row3->Add(nsfwCheck_, 0, wxALL, 2);
     row3->Add(torCheck_, 0, wxALL, 2);
+    row3->Add(usableCheck_, 0, wxALL, 2);
     sizer->Add(row3, 0, wxEXPAND | wxALL, 2);
 
     SetSizer(sizer);
@@ -78,5 +80,6 @@ SearchParams SearchPanel::getParams() const {
     p.imagesOnly = imagesOnlyCheck_->GetValue();
     p.minImages = minImgSpin_->GetValue();
     p.useTor = torCheck_->GetValue();
+    p.usableOnly = usableCheck_->GetValue();
     return p;
 }

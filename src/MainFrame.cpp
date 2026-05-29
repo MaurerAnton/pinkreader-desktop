@@ -87,27 +87,30 @@ void MainFrame::doSearch(const SearchParams &params) {
     if (params.useTor) client_->setTorProxy();
     if (params.type == "subs") {
         auto subs = client_->searchSubreddits(params.query, params.sort, params.limit);
-        // Images-only: probe each subreddit for image content
-        if (params.imagesOnly) {
-            std::vector<std::string> imgSubs;
+        // Usable-only: probe each subreddit for API accessibility
+        if (params.usableOnly || params.imagesOnly) {
+            std::vector<std::string> filtered;
             for (auto &s : subs) {
-                auto posts = client_->fetchPosts(s, "hot", params.minImages * 2);
-                wxYield(); // keep GUI responsive
-                updateStats();
-                int count = 0;
-                for (auto &p : posts) {
-                    if (p.postHint == "image" ||
-                        p.url.find("i.redd.it") != std::string::npos ||
-                        p.url.find(".jpg") != std::string::npos ||
-                        p.url.find(".png") != std::string::npos) {
-                        count++;
-                        if (count >= params.minImages) break;
+                wxYield(); updateStats();
+                auto posts = client_->fetchPosts(s, "hot", std::max(5, params.minImages * 2));
+                wxLogStatus(wxString::Format("Probing r/%s... %zu posts", s, posts.size()));
+                if (params.usableOnly && posts.empty()) continue;
+                if (params.imagesOnly) {
+                    int count = 0;
+                    for (auto &p : posts) {
+                        if (p.postHint == "image" ||
+                            p.url.find("i.redd.it") != std::string::npos ||
+                            p.url.find(".jpg") != std::string::npos ||
+                            p.url.find(".png") != std::string::npos) {
+                            count++;
+                            if (count >= params.minImages) break;
+                        }
                     }
+                    if (count < params.minImages) continue;
                 }
-                if (count >= params.minImages) imgSubs.push_back(s);
-                wxLogStatus(wxString::Format("Probing %s... %d images found", s, count));
+                filtered.push_back(s);
             }
-            subs = imgSubs;
+            subs = filtered;
         }
         if (subs.empty()) {
             wxLogStatus("No subreddits found for: " + wxString::FromUTF8(params.query));

@@ -16,6 +16,7 @@ struct SearchParams {
     bool dedup = false;
     bool imagesOnly = false;
     bool useTor = false;
+    bool usableOnly = false;    // only show subreddits accessible via API
 };
 
 class SearchPanel : public wxPanel {
@@ -37,5 +38,6 @@ private:
     wxCheckBox *dedupCheck_ = nullptr;
     wxCheckBox *imagesOnlyCheck_ = nullptr;
     wxCheckBox *torCheck_ = nullptr;
+    wxCheckBox *usableCheck_ = nullptr;
     wxButton *searchBtn_ = nullptr;
 };
