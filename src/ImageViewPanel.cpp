@@ -30,10 +30,25 @@ ImageViewPanel::ImageViewPanel(wxWindow *parent)
     playBtn_->Hide();
     playBtn_->Bind(wxEVT_BUTTON, &ImageViewPanel::onPlayClick, this);
 
+    prevBtn_ = new wxButton(this, wxID_ANY, "← Prev");
+    prevBtn_->Hide();
+    prevBtn_->Bind(wxEVT_BUTTON, &ImageViewPanel::onPrevClick, this);
+
+    nextBtn_ = new wxButton(this, wxID_ANY, "Next →");
+    nextBtn_->Hide();
+    nextBtn_->Bind(wxEVT_BUTTON, &ImageViewPanel::onNextClick, this);
+
+    auto *navSizer = new wxBoxSizer(wxHORIZONTAL);
+    navSizer->Add(prevBtn_, 0, wxALL, 2);
+    navSizer->AddStretchSpacer();
+    navSizer->Add(playBtn_, 0, wxALL, 2);
+    navSizer->AddStretchSpacer();
+    navSizer->Add(nextBtn_, 0, wxALL, 2);
+
     sizer->Add(caption_, 0, wxEXPAND | wxALL, 5);
     sizer->Add(bitmap_, 1, wxEXPAND | wxALL, 5);
     sizer->Add(videoPanel_, 1, wxEXPAND | wxALL, 5);
-    sizer->Add(playBtn_, 0, wxALIGN_CENTER | wxALL, 5);
+    sizer->Add(navSizer, 0, wxEXPAND);
     sizer->Add(status_, 0, wxEXPAND | wxALL, 5);
     SetSizer(sizer);
 }
@@ -150,4 +165,40 @@ void ImageViewPanel::showImage(const std::string &url, const std::string &captio
     bitmap_->SetBitmap(wxBitmap(img));
     status_->SetLabel(wxString::Format("%dx%d  %.1f KB", img.GetWidth(), img.GetHeight(), data.size() / 1024.0));
     Layout();
+}
+
+void ImageViewPanel::showGallery(const std::vector<std::string> &urls, const std::string &caption) {
+    killMpv();
+    lastVideoUrl_.clear();
+    pendingVideoUrl_.clear();
+    playBtn_->Hide();
+    videoPanel_->Hide();
+    bitmap_->Show();
+    prevBtn_->Show();
+    nextBtn_->Show();
+    galleryUrls_ = urls;
+    galleryIdx_ = 0;
+    std::string cleanCaption;
+    for (char c : caption) if ((unsigned char)c >= 0x20 && (unsigned char)c < 0x7F) cleanCaption += c;
+    caption_->SetLabel(wxString::FromAscii(("[GALLERY " + std::to_string(urls.size()) + "]" + cleanCaption).c_str()));
+    loadGalleryImage(0);
+}
+
+void ImageViewPanel::loadGalleryImage(int idx) {
+    if (idx < 0 || idx >= (int)galleryUrls_.size()) return;
+    galleryIdx_ = idx;
+    std::string url = galleryUrls_[idx];
+    size_t q = url.find('?');
+    if (q != std::string::npos) url = url.substr(0, q);
+    showImage(url, "");
+    caption_->SetLabel(wxString::FromAscii(("[GALLERY " + std::to_string(galleryUrls_.size())
+                      + "/" + std::to_string(idx + 1) + "]").c_str()));
+}
+
+void ImageViewPanel::onPrevClick(wxCommandEvent &) {
+    if (galleryIdx_ > 0) loadGalleryImage(galleryIdx_ - 1);
+}
+
+void ImageViewPanel::onNextClick(wxCommandEvent &) {
+    if (galleryIdx_ < (int)galleryUrls_.size() - 1) loadGalleryImage(galleryIdx_ + 1);
 }

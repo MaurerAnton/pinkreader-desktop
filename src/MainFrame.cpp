@@ -108,6 +108,8 @@ void MainFrame::onPostSelected(wxListEvent &evt) {
         auto &p = posts_[idx];
         if (isVideoPost(p))
             imageView_->showVideoInfo(p.url, p.title);
+        else if (p.isGallery && !p.galleryUrls.empty())
+            imageView_->showGallery(p.galleryUrls, p.title);
         else
             imageView_->showImage(p.url, p.title);
         wxLogStatus(wxString::Format("r/%s - u/%s - %d pts, %d comments",

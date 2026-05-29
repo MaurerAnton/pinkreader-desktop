@@ -6,5 +6,7 @@ struct PostData {
     std::string selftext, thumbnail, postHint;
     int score = 0, numComments = 0;
     bool over18 = false, isSelf = false;
+    bool isGallery = false;
+    std::vector<std::string> galleryUrls;
     double created = 0;
 };

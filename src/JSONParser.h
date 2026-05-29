@@ -113,6 +113,23 @@ inline PostData parsePost(const JVal &d) {
     p.over18 = d["over_18"].bl();
     p.isSelf = d["is_self"].bl();
     p.created = d["created_utc"].num();
+    // Gallery support
+    p.isGallery = d["is_gallery"].bl();
+    if (p.isGallery) {
+        JVal mm = d["media_metadata"];
+        for (auto &kv : mm.obj) {
+            JVal src = kv.second["s"]["u"];
+            if (src.type == JSTR && !src.s.empty()) p.galleryUrls.push_back(src.s);
+        }
+        // Also try preview images as fallback
+        if (p.galleryUrls.empty()) {
+            JVal preview = d["preview"]["images"];
+            for (int pi = 0; pi < preview.sz(); pi++) {
+                JVal src = preview.at(pi)["source"]["url"];
+                if (src.type == JSTR) p.galleryUrls.push_back(src.s);
+            }
+        }
+    }
     return p;
 }
 
