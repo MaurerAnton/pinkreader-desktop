@@ -206,7 +206,20 @@ void MainFrame::loadPosts(const std::string &subreddit, const std::string &sort)
                                   params.limit > 0 ? params.limit : 50);
     if (params.imagesOnly) {
         posts_.erase(std::remove_if(posts_.begin(), posts_.end(),
-            [](const PostData &p) { return p.postHint != "image"; }), posts_.end());
+            [](const PostData &p) {
+                if (p.postHint == "image") return false; // keep
+                // Also check URL for image extensions and domains
+                if (p.url.find("i.redd.it") != std::string::npos) return false;
+                if (p.url.find("i.imgur.com") != std::string::npos) return false;
+                if (p.url.find(".jpg") != std::string::npos ||
+                    p.url.find(".jpeg") != std::string::npos ||
+                    p.url.find(".png") != std::string::npos ||
+                    p.url.find(".gif") != std::string::npos ||
+                    p.url.find(".webp") != std::string::npos) return false;
+                // For old.reddit fallback: keep if domain is image host
+                if (p.domain == "i.redd.it" || p.domain == "i.imgur.com") return false;
+                return true; // remove
+            }), posts_.end());
     }
     postList_->setPosts(posts_);
     wxLogStatus(wxString::Format("r/%s - %zu posts | API: %d/%d%s",
