@@ -63,7 +63,7 @@ private:
     ImageViewPanel *imageView_ = nullptr;
     SearchPanel *searchPanel_ = nullptr;
     wxGauge *rateGauge_ = nullptr;
-    wxStaticText *statsText_ = nullptr;
+    wxTextCtrl *statsText_ = nullptr;
     wxTimer *statsTimer_ = nullptr;
     std::unique_ptr<RedditClient> client_;
     std::vector<PostData> posts_;
@@ -71,4 +71,5 @@ private:
     std::string currentSub_;
     std::string token_;
     std::string historyFile_;
+    std::string statsInfo_;
 };

@@ -65,8 +65,8 @@ void MainFrame::setupLayout() {
     rateGauge_ = new wxGauge(rightPanel, wxID_ANY, RedditClient::RATE_LIMIT,
                               wxDefaultPosition, wxSize(-1, 12), wxGA_HORIZONTAL);
     rateGauge_->SetValue(0);
-    statsText_ = new wxStaticText(rightPanel, wxID_ANY, "");
-    statsText_->SetFont(wxFont(8, wxFONTFAMILY_TELETYPE, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_NORMAL));
+    statsText_ = new wxTextCtrl(rightPanel, wxID_ANY, "", wxDefaultPosition, wxSize(-1, 36),
+                                 wxTE_READONLY | wxTE_MULTILINE | wxBORDER_NONE);
     rightSizer->Add(searchPanel_, 0, wxEXPAND | wxALL, 5);
     rightSizer->Add(imageView_, 1, wxEXPAND | wxALL, 5);
     rightSizer->Add(rateGauge_, 0, wxEXPAND | wxLEFT | wxRIGHT, 5);
@@ -163,11 +163,15 @@ void MainFrame::onPostSelected(wxListEvent &evt) {
             imageView_->showGallery(p.galleryUrls, p.title);
         else
             imageView_->showImage(p.url, p.title);
-        wxLogStatus(wxString::Format("r/%s - u/%s - %d pts, %d comments%s | reddit.com%s | %s",
-                     p.subreddit.c_str(), p.author.c_str(), p.score, p.numComments,
+        // Set status bar with copyable text in both stats panel and status
+        wxString info = wxString::Format("r/%s - u/%s - %d pts, %d comments%s | reddit.com%s | %s",
+                     p.subreddit, p.author, p.score, p.numComments,
                      p.over18 ? " NSFW" : "",
-                     p.permalink.c_str(),
-                     p.isGallery ? "gallery" : p.url.c_str()));
+                     p.permalink,
+                     p.isGallery ? "gallery" : p.url);
+        wxLogStatus(info);
+        // Also show in statsText so it can be copied
+        statsText_->ChangeValue(wxString::Format("%s | %s", info, statsInfo_));
     }
 }
 
@@ -185,6 +189,7 @@ bool MainFrame::isVideoPost(const PostData &p) const {
 void MainFrame::loadHistory() {
     const char *xdg = getenv("XDG_CONFIG_HOME");
     std::string dir = xdg ? std::string(xdg) + "/pinkreader" : std::string(getenv("HOME")) + "/.config/pinkreader";
+    wxMkdir(wxString::FromUTF8(dir), 0700);
     historyFile_ = dir + "/history";
     std::ifstream f(historyFile_);
     if (!f) return;
@@ -269,11 +274,11 @@ void MainFrame::onRefresh(wxCommandEvent &) {
 
 void MainFrame::updateStats() {
     rateGauge_->SetValue(std::min(client_->requestCount(), RedditClient::RATE_LIMIT));
-    statsText_->SetLabel(wxString::Format(
-        "%d/%d req  %d/min  HTTP %ld  %s",
+    statsInfo_ = wxString::Format("%d/%d req  %d/min  HTTP %ld  %s",
         client_->requestCount(), RedditClient::RATE_LIMIT,
         client_->requestsPerMinute(), client_->lastHttpCode(),
-        client_->fallbackUsed() ? "old.reddit" : "api.reddit"));
+        client_->fallbackUsed() ? "old.reddit" : "api.reddit").ToStdString();
+    statsText_->ChangeValue(wxString::FromUTF8(statsInfo_));
     rateGauge_->Refresh();
     statsText_->Refresh();
 }
