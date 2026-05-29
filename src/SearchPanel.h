@@ -11,7 +11,7 @@ struct SearchParams {
     std::string sort = "relevance";
     std::string timeFilter;
     int limit = 25;
-    int minImages = 3;
+    int minImages = 1;        // minimum image posts a subreddit must have
     bool nsfw = false;
     bool bestQuality = false;
     bool dedup = false;

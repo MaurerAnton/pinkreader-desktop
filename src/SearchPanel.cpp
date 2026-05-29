@@ -55,8 +55,8 @@ SearchPanel::SearchPanel(wxWindow *parent)
     bestQualityCheck_ = new wxCheckBox(this, wxID_ANY, "Best quality");
     dedupCheck_ = new wxCheckBox(this, wxID_ANY, "Dedup");
     imagesOnlyCheck_ = new wxCheckBox(this, wxID_ANY, "Images only");
-    minImgSpin_ = new wxSpinCtrl(this, wxID_ANY, "3", wxDefaultPosition, wxSize(50, -1),
-                                  wxSP_ARROW_KEYS, 1, 50, 3);
+    minImgSpin_ = new wxSpinCtrl(this, wxID_ANY, "1", wxDefaultPosition, wxSize(50, -1),
+                                  wxSP_ARROW_KEYS, 1, 50, 1);
     nsfwCheck_ = new wxCheckBox(this, wxID_ANY, "NSFW");
     torCheck_ = new wxCheckBox(this, wxID_ANY, "Tor");
     usableCheck_ = new wxCheckBox(this, wxID_ANY, "Usable");
