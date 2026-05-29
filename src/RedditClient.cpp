@@ -199,13 +199,6 @@ std::vector<PostData> RedditClient::searchPosts(const std::string &query, const 
     if (!timeFilter.empty()) url += "&t=" + timeFilter;
     auto body = httpGet(url);
     auto posts = filterPosts(::parseListing(body));
-    if (posts.empty() && lastHttpCode_ == 403) {
-        std::string oldUrl = "https://old.reddit.com/search?q=" + urlEncode(query)
-                           + "&sort=" + sort + "&restrict_sr=off";
-        fprintf(stderr, "[fallback] search 403, trying old.reddit.com\n"); fflush(stderr);
-        posts = filterPosts(parseOldRedditListing(httpGet(oldUrl)));
-        if (!posts.empty()) fallbackUsed_ = true;
-    }
     return posts;
 }
 
