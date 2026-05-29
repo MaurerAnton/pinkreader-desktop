@@ -171,7 +171,7 @@ std::vector<std::string> RedditClient::searchSubreddits(const std::string &query
     std::string url = std::string(ANON_BASE) + "/subreddits/search.json?q=" + urlEncode(query)
                     + "&sort=" + sort + "&limit=" + std::to_string(limit) + "&raw_json=1";
     auto names = parseSubredditNames(httpGet(url));
-    if (names.empty() && lastHttpCode_ == 403) {
+    if (names.empty() && (lastHttpCode_ == 403 || lastHttpCode_ == 429)) {
         std::string oldUrl = "https://old.reddit.com/subreddits/search?q=" + urlEncode(query);
         fprintf(stderr, "[fallback] sub search 403, trying old.reddit.com\n"); fflush(stderr);
         names = parseOldRedditSubreddits(httpGet(oldUrl));
@@ -207,7 +207,7 @@ std::vector<PostData> RedditClient::fetchPosts(const std::string &sub, const std
                     + ".json?limit=" + std::to_string(limit) + "&raw_json=1";
     auto body = httpGet(url);
     auto posts = filterPosts(::parseListing(body));
-    if (posts.empty() && lastHttpCode_ == 403) {
+    if (posts.empty() && (lastHttpCode_ == 403 || lastHttpCode_ == 429)) {
         std::string oldUrl = buildOldRedditUrl(sub, sort);
         fprintf(stderr, "[fallback] HTTP 403, trying old.reddit.com\n"); fflush(stderr);
         auto oldBody = httpGet(oldUrl);
