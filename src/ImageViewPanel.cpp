@@ -6,6 +6,7 @@
 #include <wx/utils.h>
 #include <cstdint>
 #include <cstdio>
+#include <ctime>
 #include <algorithm>
 
 ImageViewPanel::ImageViewPanel(wxWindow *parent)
@@ -46,9 +47,21 @@ void ImageViewPanel::onMediaLoaded(wxMediaEvent &) {
 
 void ImageViewPanel::onPlayClick(wxCommandEvent &) {
     if (!pendingVideoUrl_.empty()) {
-        media_->Load(wxURI(wxString::FromUTF8(pendingVideoUrl_)));
-        status_->SetLabel("Loading video...");
-        playBtn_->SetLabel("⏳ Loading...");
+        // Download video via yt-dlp to temp file, then play locally
+        status_->SetLabel("Downloading video via yt-dlp...");
+        std::string tmpFile = "/tmp/pinkreader_video_" + std::to_string(time(nullptr)) + ".mp4";
+        std::string cmd = "yt-dlp -o " + tmpFile + " --no-playlist " + pendingVideoUrl_ + " 2>/dev/null";
+        int rc = system(cmd.c_str());
+        if (rc == 0 && wxFileExists(wxString::FromUTF8(tmpFile))) {
+            media_->Load(wxURI(wxString::FromUTF8("file://" + tmpFile)));
+            status_->SetLabel("Loading video...");
+            playBtn_->SetLabel("⏳ Loading...");
+        } else {
+            // Fallback: try loading URL directly
+            media_->Load(wxURI(wxString::FromUTF8(pendingVideoUrl_)));
+            status_->SetLabel("Loading video...");
+            playBtn_->SetLabel("⏳ Loading...");
+        }
     } else if (media_->GetState() == wxMEDIASTATE_PLAYING) {
         media_->Pause();
         playBtn_->SetLabel("▶ Resume");
