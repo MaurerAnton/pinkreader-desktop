@@ -209,9 +209,7 @@ static std::vector<PostData> parseOldRedditSearchResults(const std::string &html
                     // Strip query params for clean URL
                     size_t qm = imgUrl.find('?');
                     if (qm != std::string::npos) imgUrl = imgUrl.substr(0, qm);
-                    // external-preview.redd.it often doesn't serve images directly — skip
-                    if (imgUrl.find("external-preview.redd.it") == std::string::npos)
-                        p.url = imgUrl;
+                    p.url = imgUrl;
                 }
             }
         }
