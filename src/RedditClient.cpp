@@ -196,7 +196,9 @@ static std::vector<PostData> parseOldRedditSearchResults(const std::string &html
                 if (ie != std::string::npos) {
                     std::string imgUrl = chunk.substr(is, ie - is);
                     if (imgUrl.find("http") != 0) imgUrl = "https:" + imgUrl;
-                    p.url = imgUrl;
+                    // external-preview.redd.it often doesn't serve images directly — skip
+                    if (imgUrl.find("external-preview.redd.it") == std::string::npos)
+                        p.url = imgUrl;
                 }
             }
         }
