@@ -65,8 +65,9 @@ void MainFrame::setupLayout() {
     rateGauge_ = new wxGauge(rightPanel, wxID_ANY, RedditClient::RATE_LIMIT,
                               wxDefaultPosition, wxSize(-1, 12), wxGA_HORIZONTAL);
     rateGauge_->SetValue(0);
-    statsText_ = new wxTextCtrl(rightPanel, wxID_ANY, "", wxDefaultPosition, wxSize(-1, 36),
-                                 wxTE_READONLY | wxTE_MULTILINE | wxBORDER_NONE);
+    statsText_ = new wxTextCtrl(rightPanel, wxID_ANY, "", wxDefaultPosition, wxSize(-1, 40),
+                                 wxTE_READONLY | wxTE_MULTILINE);
+    statsText_->SetFont(wxFont(8, wxFONTFAMILY_TELETYPE, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_NORMAL));
     rightSizer->Add(searchPanel_, 0, wxEXPAND | wxALL, 5);
     rightSizer->Add(imageView_, 1, wxEXPAND | wxALL, 5);
     rightSizer->Add(rateGauge_, 0, wxEXPAND | wxLEFT | wxRIGHT, 5);
