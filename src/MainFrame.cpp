@@ -71,6 +71,24 @@ void MainFrame::doSearch(const SearchParams &params) {
     client_->setDedup(params.dedup);
     if (params.type == "subs") {
         auto subs = client_->searchSubreddits(params.query, params.sort, params.limit);
+        // Images-only: probe each subreddit for image content
+        if (params.imagesOnly) {
+            std::vector<std::string> imgSubs;
+            for (auto &s : subs) {
+                auto posts = client_->fetchPosts(s, "hot", 3);
+                bool hasImage = false;
+                for (auto &p : posts) {
+                    if (p.postHint == "image" ||
+                        p.url.find("i.redd.it") != std::string::npos ||
+                        p.url.find(".jpg") != std::string::npos ||
+                        p.url.find(".png") != std::string::npos) {
+                        hasImage = true; break;
+                    }
+                }
+                if (hasImage) imgSubs.push_back(s);
+            }
+            subs = imgSubs;
+        }
         if (subs.empty()) {
             wxLogStatus("No subreddits found for: " + wxString::FromUTF8(params.query));
             return;
