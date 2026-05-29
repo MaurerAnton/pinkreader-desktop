@@ -127,6 +127,9 @@ static std::vector<PostData> parseOldRedditSearchResults(const std::string &html
                 if (te != std::string::npos) p.title = chunk.substr(tp, te - tp);
             }
         }
+        fprintf(stderr, "[searchresult] title=%.60s\n", p.title.c_str()); fflush(stderr);
+        fprintf(stderr, "[searchresult] id=%s author=%s sub=%s score=%d\n",
+                p.id.c_str(), p.author.c_str(), p.subreddit.c_str(), p.score); fflush(stderr);
         if (!p.title.empty()) {
             posts.push_back(p);
             fprintf(stderr, "[searchresult] %s\n", p.title.c_str()); fflush(stderr);
