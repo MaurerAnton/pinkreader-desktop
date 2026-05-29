@@ -14,6 +14,7 @@ PostListPanel::PostListPanel(wxWindow *parent)
     listView_->AppendColumn("Comments", wxLIST_FORMAT_RIGHT, 70);
     listView_->AppendColumn("Author", wxLIST_FORMAT_LEFT, 100);
     listView_->AppendColumn("Subreddit", wxLIST_FORMAT_LEFT, 100);
+    listView_->AppendColumn("NSFW", wxLIST_FORMAT_CENTER, 45);
     fprintf(stderr, "[PostListPanel] columns added\n"); fflush(stderr);
     sizer->Add(listView_, 1, wxEXPAND);
     SetSizer(sizer);
@@ -45,6 +46,7 @@ void PostListPanel::setPosts(const std::vector<PostData> &posts) {
         listView_->SetItem(i, 2, wxString::Format("%d", p.numComments));
         listView_->SetItem(i, 3, clean(p.author));
         listView_->SetItem(i, 4, clean(p.subreddit));
+        listView_->SetItem(i, 5, p.over18 ? "NSFW" : "");
     }
     fprintf(stderr, "[setPosts] done\n"); fflush(stderr);
 }

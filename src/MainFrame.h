@@ -2,6 +2,8 @@
 #include <wx/wx.h>
 #include <wx/splitter.h>
 #include <wx/listctrl.h>
+#include <wx/gauge.h>
+#include <wx/timer.h>
 #include "PostData.h"
 #include "SearchPanel.h"
 #include <memory>
@@ -16,6 +18,7 @@ enum {
     ID_CTX_OPEN_VIDEO,
     ID_CTX_COPY_LINK,
     ID_CTX_COPY_ID,
+    ID_STATS_TIMER,
 };
 
 class RedditClient;
@@ -41,6 +44,7 @@ private:
     void onCtxOpenVideo(wxCommandEvent &evt);
     void onCtxCopyLink(wxCommandEvent &evt);
     void onCtxCopyId(wxCommandEvent &evt);
+    void onStatsTimer(wxTimerEvent &evt);
     void loadPosts(const std::string &subreddit, const std::string &sort = "hot");
     void doSearch(const SearchParams &params);
 
@@ -52,7 +56,9 @@ private:
     PostListPanel *postList_ = nullptr;
     ImageViewPanel *imageView_ = nullptr;
     SearchPanel *searchPanel_ = nullptr;
+    wxGauge *rateGauge_ = nullptr;
     wxStaticText *statsText_ = nullptr;
+    wxTimer *statsTimer_ = nullptr;
     std::unique_ptr<RedditClient> client_;
     std::vector<PostData> posts_;
     std::string currentSub_;

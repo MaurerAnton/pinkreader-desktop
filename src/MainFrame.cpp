@@ -4,6 +4,7 @@
 #include "SearchPanel.h"
 #include "RedditClient.h"
 #include <cstdio>
+#include <algorithm>
 #include <wx/clipbrd.h>
 #include <wx/utils.h>
 
@@ -55,12 +56,20 @@ void MainFrame::setupLayout() {
     searchPanel_ = new SearchPanel(rightPanel);
     searchPanel_->getSearchButton()->Bind(wxEVT_BUTTON, &MainFrame::onSearch, this);
     imageView_ = new ImageViewPanel(rightPanel);
+    rateGauge_ = new wxGauge(rightPanel, wxID_ANY, RedditClient::RATE_LIMIT,
+                              wxDefaultPosition, wxSize(-1, 12), wxGA_HORIZONTAL);
+    rateGauge_->SetValue(0);
     statsText_ = new wxStaticText(rightPanel, wxID_ANY, "");
-    statsText_->SetFont(wxFont(9, wxFONTFAMILY_TELETYPE, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_NORMAL));
+    statsText_->SetFont(wxFont(8, wxFONTFAMILY_TELETYPE, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_NORMAL));
     rightSizer->Add(searchPanel_, 0, wxEXPAND | wxALL, 5);
     rightSizer->Add(imageView_, 1, wxEXPAND | wxALL, 5);
+    rightSizer->Add(rateGauge_, 0, wxEXPAND | wxLEFT | wxRIGHT, 5);
     rightSizer->Add(statsText_, 0, wxEXPAND | wxALL, 3);
     rightPanel->SetSizer(rightSizer);
+
+    statsTimer_ = new wxTimer(this, ID_STATS_TIMER);
+    statsTimer_->Start(1000);
+    Bind(wxEVT_TIMER, &MainFrame::onStatsTimer, this, ID_STATS_TIMER);
     splitter_->SplitVertically(postList_, rightPanel, 400);
 }
 
@@ -135,8 +144,9 @@ void MainFrame::onPostSelected(wxListEvent &evt) {
             imageView_->showGallery(p.galleryUrls, p.title);
         else
             imageView_->showImage(p.url, p.title);
-        wxLogStatus(wxString::Format("r/%s - u/%s - %d pts, %d comments | %s",
+        wxLogStatus(wxString::Format("r/%s - u/%s - %d pts, %d comments%s | %s",
                      p.subreddit.c_str(), p.author.c_str(), p.score, p.numComments,
+                     p.over18 ? " NSFW" : "",
                      p.isGallery ? "gallery" : p.url.c_str()));
     }
 }
@@ -212,11 +222,20 @@ void MainFrame::onRefresh(wxCommandEvent &) {
 }
 
 void MainFrame::updateStats() {
+    rateGauge_->SetValue(std::min(client_->requestCount(), RedditClient::RATE_LIMIT));
     statsText_->SetLabel(wxString::Format(
-        "API: %d/%d req  |  %d/min  |  last HTTP %ld  |  %s",
+        "%d/%d req  %d/min  HTTP %ld  %s",
         client_->requestCount(), RedditClient::RATE_LIMIT,
         client_->requestsPerMinute(), client_->lastHttpCode(),
         client_->fallbackUsed() ? "old.reddit" : "api.reddit"));
+    rateGauge_->Refresh();
+    statsText_->Refresh();
+}
+
+void MainFrame::onStatsTimer(wxTimerEvent &) {
+    updateStats();
+    // Force yield so GUI updates during long operations
+    wxYieldIfNeeded();
 }
 
 void MainFrame::onLogin(wxCommandEvent &) {
