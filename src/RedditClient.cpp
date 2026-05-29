@@ -107,6 +107,9 @@ static std::vector<PostData> parseOldRedditSearchResults(const std::string &html
         };
         p.id = attr("fullname");
         if (p.id.find("t3_") == 0) p.id = p.id.substr(3);
+        // data-url attribute has the real post URL (image/gallery/video)
+        std::string realUrl = attr("url");
+        if (!realUrl.empty()) p.url = realUrl;
         // Extract from permalink href: /r/subreddit/comments/id/title
         size_t ph = chunk.find("/r/");
         if (ph != std::string::npos) {
@@ -272,6 +275,9 @@ static std::vector<PostData> parseOldRedditListing(const std::string &html) {
         p.url = attr("url");
         p.permalink = attr("permalink");
         p.domain = attr("domain");
+        // data-url is the actual post link (image/video URL)
+        std::string dataUrl = attr("url");
+        if (!dataUrl.empty()) p.url = dataUrl;
         p.score = std::atoi(attr("score").c_str());
         p.numComments = std::atoi(attr("comments-count").c_str());
         p.over18 = (attr("nsfw") == "true");
