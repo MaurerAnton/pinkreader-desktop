@@ -81,6 +81,7 @@ void MainFrame::onSearch(wxCommandEvent &) {
 }
 
 void MainFrame::doSearch(const SearchParams &params) {
+    fprintf(stderr, "[doSearch] type=%s query=%s\n", params.type.c_str(), params.query.c_str()); fflush(stderr);
     client_->setBestQuality(params.bestQuality);
     client_->setDedup(params.dedup);
     if (params.useTor) client_->setTorProxy();
