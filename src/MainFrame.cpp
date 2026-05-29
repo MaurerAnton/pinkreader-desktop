@@ -4,21 +4,17 @@
 #include "SearchPanel.h"
 #include "RedditClient.h"
 #include <cstdio>
+#include <wx/clipbrd.h>
+#include <wx/utils.h>
 
 MainFrame::MainFrame(const wxString &title)
     : wxFrame(nullptr, wxID_ANY, title, wxDefaultPosition, wxSize(1024, 700))
 {
-    fprintf(stderr, "[MainFrame] constructor start\n"); fflush(stderr);
     client_ = std::make_unique<RedditClient>();
-    fprintf(stderr, "[MainFrame] RedditClient created\n"); fflush(stderr);
     setupMenu();
-    fprintf(stderr, "[MainFrame] menu done\n"); fflush(stderr);
     setupLayout();
-    fprintf(stderr, "[MainFrame] layout done\n"); fflush(stderr);
     CreateStatusBar();
-    fprintf(stderr, "[MainFrame] statusbar done, loading posts\n"); fflush(stderr);
     loadPosts("popular", "hot");
-    fprintf(stderr, "[MainFrame] posts loaded\n"); fflush(stderr);
 }
 
 void MainFrame::setupMenu() {
@@ -41,6 +37,10 @@ void MainFrame::setupMenu() {
     Bind(wxEVT_MENU, &MainFrame::onNavPopular, this, ID_MENU_POPULAR);
     Bind(wxEVT_MENU, &MainFrame::onNavAll, this, ID_MENU_ALL);
     Bind(wxEVT_MENU, &MainFrame::onLogin, this, ID_MENU_LOGIN);
+    Bind(wxEVT_MENU, &MainFrame::onCtxOpenBrowser, this, ID_CTX_OPEN_BROWSER);
+    Bind(wxEVT_MENU, &MainFrame::onCtxOpenVideo, this, ID_CTX_OPEN_VIDEO);
+    Bind(wxEVT_MENU, &MainFrame::onCtxCopyLink, this, ID_CTX_COPY_LINK);
+    Bind(wxEVT_MENU, &MainFrame::onCtxCopyId, this, ID_CTX_COPY_ID);
 }
 
 void MainFrame::setupLayout() {
@@ -48,6 +48,7 @@ void MainFrame::setupLayout() {
                                       wxSP_3D | wxSP_LIVE_UPDATE);
     postList_ = new PostListPanel(splitter_);
     postList_->getListView()->Bind(wxEVT_LIST_ITEM_SELECTED, &MainFrame::onPostSelected, this);
+    postList_->getListView()->Bind(wxEVT_LIST_ITEM_RIGHT_CLICK, &MainFrame::onContextMenu, this);
 
     auto *rightPanel = new wxPanel(splitter_);
     auto *rightSizer = new wxBoxSizer(wxVERTICAL);
@@ -102,14 +103,73 @@ void MainFrame::doSearch(const SearchParams &params) {
 }
 
 void MainFrame::onPostSelected(wxListEvent &evt) {
-    fprintf(stderr, "[onPostSelected] index=%d\n", evt.GetIndex()); fflush(stderr);
     int idx = evt.GetIndex();
     if (idx >= 0 && idx < (int)posts_.size()) {
         auto &p = posts_[idx];
-        fprintf(stderr, "[onPostSelected] url=%s\n", p.url.c_str()); fflush(stderr);
         imageView_->showImage(p.url, p.title);
         wxLogStatus(wxString::Format("r/%s - u/%s - %d pts, %d comments",
                      p.subreddit.c_str(), p.author.c_str(), p.score, p.numComments));
+    }
+}
+
+void MainFrame::onContextMenu(wxListEvent &evt) {
+    lastContextIdx_ = evt.GetIndex();
+    if (lastContextIdx_ < 0 || lastContextIdx_ >= (int)posts_.size()) return;
+    auto &p = posts_[lastContextIdx_];
+
+    wxMenu menu;
+    menu.Append(ID_CTX_OPEN_BROWSER, "Open in browser");
+    if (isVideoPost(p)) {
+        menu.Append(ID_CTX_OPEN_VIDEO, "Play video (mpv)");
+    }
+    menu.AppendSeparator();
+    menu.Append(ID_CTX_COPY_LINK, "Copy link");
+    menu.Append(ID_CTX_COPY_ID, "Copy post ID");
+    PopupMenu(&menu);
+}
+
+bool MainFrame::isVideoPost(const PostData &p) const {
+    if (p.postHint == "hosted:video" || p.postHint == "rich:video") return true;
+    if (p.domain == "v.redd.it") return true;
+    std::string lower = p.url;
+    std::transform(lower.begin(), lower.end(), lower.begin(), ::tolower);
+    return (lower.find(".mp4") != std::string::npos ||
+            lower.find(".webm") != std::string::npos ||
+            lower.find("youtube.com") != std::string::npos ||
+            lower.find("youtu.be") != std::string::npos);
+}
+
+void MainFrame::onCtxOpenBrowser(wxCommandEvent &) {
+    if (lastContextIdx_ >= 0 && lastContextIdx_ < (int)posts_.size()) {
+        std::string url = "https://www.reddit.com" + posts_[lastContextIdx_].permalink;
+        wxLaunchDefaultBrowser(wxString::FromUTF8(url));
+    }
+}
+
+void MainFrame::onCtxOpenVideo(wxCommandEvent &) {
+    if (lastContextIdx_ >= 0 && lastContextIdx_ < (int)posts_.size()) {
+        std::string url = posts_[lastContextIdx_].url;
+        wxExecute("mpv " + wxString::FromUTF8(url));
+    }
+}
+
+void MainFrame::onCtxCopyLink(wxCommandEvent &) {
+    if (lastContextIdx_ >= 0 && lastContextIdx_ < (int)posts_.size()) {
+        std::string url = "https://www.reddit.com" + posts_[lastContextIdx_].permalink;
+        if (wxTheClipboard->Open()) {
+            wxTheClipboard->SetData(new wxTextDataObject(wxString::FromUTF8(url)));
+            wxTheClipboard->Close();
+        }
+    }
+}
+
+void MainFrame::onCtxCopyId(wxCommandEvent &) {
+    if (lastContextIdx_ >= 0 && lastContextIdx_ < (int)posts_.size()) {
+        std::string id = posts_[lastContextIdx_].id;
+        if (wxTheClipboard->Open()) {
+            wxTheClipboard->SetData(new wxTextDataObject(wxString::FromUTF8(id)));
+            wxTheClipboard->Close();
+        }
     }
 }
 
@@ -127,7 +187,6 @@ void MainFrame::onNavPopular(wxCommandEvent &) { loadPosts("popular"); }
 void MainFrame::onNavAll(wxCommandEvent &) { loadPosts("all"); }
 
 void MainFrame::loadPosts(const std::string &subreddit, const std::string &sort) {
-    fprintf(stderr, "[loadPosts] %s/%s\n", subreddit.c_str(), sort.c_str()); fflush(stderr);
     currentSub_ = subreddit;
     SetTitle("PinkReader Desktop");
     auto params = searchPanel_->getParams();
