@@ -162,10 +162,11 @@ void MainFrame::onPostSelected(wxListEvent &evt) {
             imageView_->showGallery(p.galleryUrls, p.title);
         else
             imageView_->showImage(p.url, p.title);
-        wxLogStatus(wxString::Format("r/%s - u/%s - %d pts, %d comments%s | %s",
+        wxLogStatus(wxString::Format("r/%s - u/%s - %d pts, %d comments%s | reddit.com%s | %s",
                      p.subreddit.c_str(), p.author.c_str(), p.score, p.numComments,
                      p.over18 ? " NSFW" : "",
-                     ("reddit.com" + p.permalink).c_str()));
+                     p.permalink.c_str(),
+                     p.isGallery ? "gallery" : p.url.c_str()));
     }
 }
 
