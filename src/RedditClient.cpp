@@ -107,11 +107,53 @@ static std::vector<PostData> parseOldRedditSearchResults(const std::string &html
         };
         p.id = attr("fullname");
         if (p.id.find("t3_") == 0) p.id = p.id.substr(3);
-        p.author = attr("author");
-        p.subreddit = attr("subreddit");
-        p.url = attr("url");
-        p.permalink = attr("permalink");
-        p.domain = attr("domain");
+        // Extract from permalink href: /r/subreddit/comments/id/title
+        size_t ph = chunk.find("/r/");
+        if (ph != std::string::npos) {
+            size_t ps = ph + 3;
+            size_t pe = chunk.find("/", ps);
+            if (pe != std::string::npos) p.subreddit = chunk.substr(ps, pe - ps);
+            // Permalink
+            size_t pc = chunk.find("\"", ph);
+            if (pc != std::string::npos) {
+                p.permalink = chunk.substr(ph, pc - ph);
+                // Full URL from search-title href
+                size_t ur = chunk.rfind("href=\"", ph);
+                if (ur != std::string::npos) {
+                    ur += 6;
+                    size_t ue = chunk.find("\"", ur);
+                    if (ue != std::string::npos) {
+                        p.url = chunk.substr(ur, ue - ur);
+                        if (p.url.find("old.reddit.com") != std::string::npos) {
+                            // It's a text post — use the permalink as the main URL
+                            p.url = "https://www.reddit.com" + p.permalink;
+                            p.isSelf = true;
+                        }
+                    }
+                }
+            }
+        }
+        // Extract author from <a href="/user/..."> or data-author
+        size_t au = chunk.find("/user/");
+        if (au == std::string::npos) au = chunk.rfind("data-author=", chunk.find("search-title"));
+        if (au != std::string::npos && chunk.rfind("data-author=", au) != std::string::npos) {
+            au = chunk.rfind("data-author=\"", au);
+            if (au == std::string::npos) {
+                // Alternative: just parse /user/ path
+                au = chunk.find("/user/");
+                if (au != std::string::npos) {
+                    au += 7;
+                    size_t aue = chunk.find("\"", au);
+                    if (aue == std::string::npos) aue = chunk.find("/", au);
+                    if (aue != std::string::npos) p.author = chunk.substr(au, aue - au);
+                }
+            } else {
+                au += 14;
+                size_t aue = chunk.find("\"", au);
+                if (aue != std::string::npos) p.author = chunk.substr(au, aue - au);
+            }
+        }
+        // Extract score from data-score
         p.score = std::atoi(attr("score").c_str());
         p.numComments = std::atoi(attr("comments-count").c_str());
         p.over18 = (attr("nsfw") == "true");
