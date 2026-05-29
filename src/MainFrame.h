@@ -45,12 +45,14 @@ private:
     void doSearch(const SearchParams &params);
 
     bool isVideoPost(const PostData &p) const;
+    void updateStats();
     int lastContextIdx_ = -1;
 
     wxSplitterWindow *splitter_ = nullptr;
     PostListPanel *postList_ = nullptr;
     ImageViewPanel *imageView_ = nullptr;
     SearchPanel *searchPanel_ = nullptr;
+    wxStaticText *statsText_ = nullptr;
     std::unique_ptr<RedditClient> client_;
     std::vector<PostData> posts_;
     std::string currentSub_;

@@ -55,8 +55,11 @@ void MainFrame::setupLayout() {
     searchPanel_ = new SearchPanel(rightPanel);
     searchPanel_->getSearchButton()->Bind(wxEVT_BUTTON, &MainFrame::onSearch, this);
     imageView_ = new ImageViewPanel(rightPanel);
+    statsText_ = new wxStaticText(rightPanel, wxID_ANY, "");
+    statsText_->SetFont(wxFont(9, wxFONTFAMILY_TELETYPE, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_NORMAL));
     rightSizer->Add(searchPanel_, 0, wxEXPAND | wxALL, 5);
     rightSizer->Add(imageView_, 1, wxEXPAND | wxALL, 5);
+    rightSizer->Add(statsText_, 0, wxEXPAND | wxALL, 3);
     rightPanel->SetSizer(rightSizer);
     splitter_->SplitVertically(postList_, rightPanel, 400);
 }
@@ -114,6 +117,7 @@ void MainFrame::doSearch(const SearchParams &params) {
         SetTitle("PinkReader Desktop");
         posts_ = posts;
         postList_->setPosts(posts_);
+        updateStats();
         wxLogStatus(wxString::Format("r/%s - %zu posts | %d/%d req %d/min HTTP %ld%s",
                       params.query, posts_.size(), client_->requestCount(), RedditClient::RATE_LIMIT,
                       client_->requestsPerMinute(), client_->lastHttpCode(),
@@ -207,6 +211,14 @@ void MainFrame::onRefresh(wxCommandEvent &) {
     loadPosts(currentSub_, params.sort);
 }
 
+void MainFrame::updateStats() {
+    statsText_->SetLabel(wxString::Format(
+        "API: %d/%d req  |  %d/min  |  last HTTP %ld  |  %s",
+        client_->requestCount(), RedditClient::RATE_LIMIT,
+        client_->requestsPerMinute(), client_->lastHttpCode(),
+        client_->fallbackUsed() ? "old.reddit" : "api.reddit"));
+}
+
 void MainFrame::onLogin(wxCommandEvent &) {
     wxTextEntryDialog dlg(this, "Enter OAuth Bearer token:", "PinkReader Login");
     if (dlg.ShowModal() == wxID_OK) {
@@ -244,6 +256,7 @@ void MainFrame::loadPosts(const std::string &subreddit, const std::string &sort)
             }), posts_.end());
     }
     postList_->setPosts(posts_);
+    updateStats();
     wxLogStatus(wxString::Format("r/%s - %zu posts | %d/%d req %d/min HTTP %ld%s",
                   subreddit, posts_.size(), client_->requestCount(), RedditClient::RATE_LIMIT,
                   client_->requestsPerMinute(), client_->lastHttpCode(),
