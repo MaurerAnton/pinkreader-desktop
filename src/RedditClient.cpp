@@ -187,6 +187,19 @@ static std::vector<PostData> parseOldRedditSearchResults(const std::string &html
             else
                 p.postHint = "link";
         }
+        // For image posts, extract the actual image URL from thumbnail
+        if (p.postHint == "image") {
+            size_t is = chunk.find("<img src=\"");
+            if (is != std::string::npos) {
+                is += 10;
+                size_t ie = chunk.find("\"", is);
+                if (ie != std::string::npos) {
+                    std::string imgUrl = chunk.substr(is, ie - is);
+                    if (imgUrl.find("http") != 0) imgUrl = "https:" + imgUrl;
+                    p.url = imgUrl;
+                }
+            }
+        }
         if (!p.title.empty()) {
             posts.push_back(p);
             fprintf(stderr, "[searchresult] %s\n", p.title.c_str()); fflush(stderr);
