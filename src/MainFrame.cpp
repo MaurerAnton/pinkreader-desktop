@@ -16,10 +16,6 @@ MainFrame::MainFrame(const wxString &title)
     setupLayout();
     CreateStatusBar();
     loadPosts("popular", "hot");
-    // Test: auto-search at startup to verify pipeline
-    SearchParams test;
-    test.query = "test"; test.type = "posts"; test.limit = 3;
-    doSearch(test);
 }
 
 void MainFrame::setupMenu() {
