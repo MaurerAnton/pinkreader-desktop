@@ -206,12 +206,12 @@ static std::vector<PostData> parseOldRedditSearchResults(const std::string &html
                     while ((amp = imgUrl.find("&gt;")) != std::string::npos)
                         imgUrl.replace(amp, 4, ">");
                     if (imgUrl.find("http") != 0) imgUrl = "https:" + imgUrl;
-                    // Strip query params for preview/i.redd.it (keep for external-preview)
-                    if (imgUrl.find("external-preview") == std::string::npos) {
+                    // external-preview.redd.it always returns 403 — skip
+                    if (imgUrl.find("external-preview.redd.it") == std::string::npos) {
                         size_t qm = imgUrl.find('?');
                         if (qm != std::string::npos) imgUrl = imgUrl.substr(0, qm);
+                        p.url = imgUrl;
                     }
-                    p.url = imgUrl;
                 }
             }
         }
