@@ -168,8 +168,8 @@ void ImageViewPanel::showImage(const std::string &url, const std::string &captio
         }
     }
     if (!img.IsOk()) {
-        status_->SetLabel("Failed to decode (" + wxString::Format("%zu", data.size()) + " bytes)");
-        return;
+        status_->SetLabel("Failed to decode (" + wxString::Format("%zu", data.size()) + " bytes) "
+                         + wxString::FromAscii(url.c_str()).Mid(0, 80));
     }
 
     int maxW = bitmap_->GetSize().GetWidth() - 10;
