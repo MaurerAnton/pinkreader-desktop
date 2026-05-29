@@ -143,6 +143,7 @@ void ImageViewPanel::showImage(const std::string &url, const std::string &captio
         curl_easy_setopt(curl, CURLOPT_TIMEOUT, 15L);
         curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1L);
         curl_easy_setopt(curl, CURLOPT_USERAGENT, "PinkReader-Desktop/0.1");
+        curl_easy_setopt(curl, CURLOPT_REFERER, "https://old.reddit.com/");
         curl_easy_perform(curl);
         curl_easy_cleanup(curl);
     }
@@ -218,6 +219,7 @@ void ImageViewPanel::loadGalleryImage(int idx) {
         curl_easy_setopt(curl, CURLOPT_TIMEOUT, 15L);
         curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1L);
         curl_easy_setopt(curl, CURLOPT_USERAGENT, "PinkReader-Desktop/0.1");
+        curl_easy_setopt(curl, CURLOPT_REFERER, "https://old.reddit.com/");
         curl_easy_perform(curl);
         curl_easy_cleanup(curl);
     }
