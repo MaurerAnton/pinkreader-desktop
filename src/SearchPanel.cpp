@@ -13,6 +13,12 @@ SearchPanel::SearchPanel(wxWindow *parent)
     row1->Add(searchBtn_, 0, wxALL, 2);
     sizer->Add(row1, 0, wxEXPAND);
 
+    historyBox_ = new wxComboBox(this, wxID_ANY, "", wxDefaultPosition, wxDefaultSize,
+                                  0, nullptr, wxCB_DROPDOWN | wxCB_READONLY);
+    historyBox_->SetHint("History");
+    historyBox_->Bind(wxEVT_COMBOBOX, &SearchPanel::onHistorySelect, this);
+    sizer->Add(historyBox_, 0, wxEXPAND | wxALL, 2);
+
     auto *row2 = new wxBoxSizer(wxHORIZONTAL);
 
     typeBox_ = new wxComboBox(this, wxID_ANY, "Subreddits", wxDefaultPosition, wxDefaultSize,
@@ -64,6 +70,17 @@ SearchPanel::SearchPanel(wxWindow *parent)
     sizer->Add(row3, 0, wxEXPAND | wxALL, 2);
 
     SetSizer(sizer);
+}
+
+void SearchPanel::setHistory(const std::vector<std::string> &history) {
+    historyBox_->Clear();
+    // Show most recent first (they're added in order, so reverse)
+    for (int i = (int)history.size() - 1; i >= 0; i--)
+        historyBox_->Append(wxString::FromUTF8(history[i]));
+}
+
+void SearchPanel::onHistorySelect(wxCommandEvent &evt) {
+    input_->SetValue(historyBox_->GetValue());
 }
 
 SearchParams SearchPanel::getParams() const {

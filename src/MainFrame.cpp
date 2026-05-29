@@ -17,6 +17,7 @@ MainFrame::MainFrame(const wxString &title)
     setupLayout();
     CreateStatusBar();
     loadHistory();
+    searchPanel_->setHistory(history_);
     loadPosts("popular", "hot");
 }
 
@@ -204,6 +205,7 @@ void MainFrame::saveHistory() {
 void MainFrame::addToHistory(const std::string &entry) {
     history_.push_back(entry);
     saveHistory();
+    searchPanel_->setHistory(history_);
 }
 
 void MainFrame::onContextMenu(wxListEvent &evt) {
