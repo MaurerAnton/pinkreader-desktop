@@ -180,7 +180,10 @@ void MainFrame::onCtxCopyId(wxCommandEvent &) {
     }
 }
 
-void MainFrame::onRefresh(wxCommandEvent &) { loadPosts(currentSub_); }
+void MainFrame::onRefresh(wxCommandEvent &) {
+    auto params = searchPanel_->getParams();
+    loadPosts(currentSub_, params.sort);
+}
 
 void MainFrame::onLogin(wxCommandEvent &) {
     wxTextEntryDialog dlg(this, "Enter OAuth Bearer token:", "PinkReader Login");

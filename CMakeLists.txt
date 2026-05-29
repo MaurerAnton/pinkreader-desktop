@@ -8,7 +8,7 @@ set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
-find_package(wxWidgets REQUIRED COMPONENTS core base stc media)
+find_package(wxWidgets REQUIRED COMPONENTS core base stc)
 find_package(CURL REQUIRED)
 
 include(${wxWidgets_USE_FILE})
