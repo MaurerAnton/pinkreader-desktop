@@ -18,6 +18,7 @@ public:
     int requestsPerMinute() const { return reqPerMin_; }
     bool fallbackUsed() const { return fallbackUsed_; }
     static constexpr int RATE_LIMIT = 600;
+    static std::string resolveVideoUrl(const std::string &url);
 
 private:
     std::string httpGet(const std::string &url);

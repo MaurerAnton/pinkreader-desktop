@@ -152,8 +152,9 @@ void MainFrame::onCtxOpenBrowser(wxCommandEvent &) {
 void MainFrame::onCtxOpenVideo(wxCommandEvent &) {
     if (lastContextIdx_ >= 0 && lastContextIdx_ < (int)posts_.size()) {
         std::string url = posts_[lastContextIdx_].url;
-        if (wxFileExists("/usr/bin/mpv") || wxFileExists("/usr/local/bin/mpv"))
-            wxExecute("mpv " + wxString::FromUTF8(url));
+        std::string directUrl = RedditClient::resolveVideoUrl(url);
+        if (!directUrl.empty())
+            wxExecute("mpv " + wxString::FromUTF8(directUrl));
         else
             wxLaunchDefaultBrowser(wxString::FromUTF8(url));
     }

@@ -1,4 +1,5 @@
 #include "ImageViewPanel.h"
+#include "RedditClient.h"
 #include <curl/curl.h>
 #include <wx/image.h>
 #include <wx/mstream.h>
@@ -14,25 +15,46 @@ ImageViewPanel::ImageViewPanel(wxWindow *parent)
     caption_ = new wxStaticText(this, wxID_ANY, "");
     caption_->SetFont(wxFont(10, wxFONTFAMILY_DEFAULT, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_BOLD));
     status_ = new wxStaticText(this, wxID_ANY, "Select a post to view");
+
     bitmap_ = new wxStaticBitmap(this, wxID_ANY, wxNullBitmap, wxDefaultPosition,
                                   wxSize(400, 300), wxBORDER_SIMPLE);
     bitmap_->SetMinSize(wxSize(100, 100));
-    playBtn_ = new wxButton(this, wxID_ANY, "▶ Play Video");
+
+    media_ = new wxMediaCtrl(this, wxID_ANY, "", wxDefaultPosition, wxSize(400, 300),
+                              0, wxMEDIABACKEND_GSTREAMER);
+    media_->Hide();
+    media_->Bind(wxEVT_MEDIA_LOADED, &ImageViewPanel::onMediaLoaded, this);
+
+    playBtn_ = new wxButton(this, wxID_ANY, "▶ Load Video");
     playBtn_->Hide();
     playBtn_->Bind(wxEVT_BUTTON, &ImageViewPanel::onPlayClick, this);
+
     sizer->Add(caption_, 0, wxEXPAND | wxALL, 5);
     sizer->Add(bitmap_, 1, wxEXPAND | wxALL, 5);
+    sizer->Add(media_, 1, wxEXPAND | wxALL, 5);
     sizer->Add(playBtn_, 0, wxALIGN_CENTER | wxALL, 5);
     sizer->Add(status_, 0, wxEXPAND | wxALL, 5);
     SetSizer(sizer);
 }
 
+void ImageViewPanel::onMediaLoaded(wxMediaEvent &) {
+    videoLoaded_ = true;
+    status_->SetLabel("Playing...");
+    playBtn_->SetLabel("⏸ Pause");
+    media_->Play();
+}
+
 void ImageViewPanel::onPlayClick(wxCommandEvent &) {
-    if (!lastVideoUrl_.empty()) {
-        if (wxFileExists("/usr/bin/mpv") || wxFileExists("/usr/local/bin/mpv"))
-            wxExecute("mpv " + wxString::FromUTF8(lastVideoUrl_));
-        else
-            wxLaunchDefaultBrowser(wxString::FromUTF8(lastVideoUrl_));
+    if (!pendingVideoUrl_.empty()) {
+        media_->Load(wxURI(wxString::FromUTF8(pendingVideoUrl_)));
+        status_->SetLabel("Loading video...");
+        playBtn_->SetLabel("⏳ Loading...");
+    } else if (media_->GetState() == wxMEDIASTATE_PLAYING) {
+        media_->Pause();
+        playBtn_->SetLabel("▶ Resume");
+    } else {
+        media_->Play();
+        playBtn_->SetLabel("⏸ Pause");
     }
 }
 
@@ -41,9 +63,18 @@ void ImageViewPanel::showVideoInfo(const std::string &url, const std::string &ca
     std::string cleanCaption;
     for (char c : caption) if ((unsigned char)c >= 0x20 && (unsigned char)c < 0x7F) cleanCaption += c;
     caption_->SetLabel(wxString::FromAscii(("[VIDEO] " + cleanCaption).c_str()));
-    bitmap_->SetBitmap(wxNullBitmap);
+
+    bitmap_->Hide();
+    media_->Show();
     playBtn_->Show();
-    status_->SetLabel("Video: " + wxString::FromAscii(url.c_str()) + "\nRight-click → Play video (mpv)");
+    playBtn_->SetLabel("▶ Load Video");
+
+    // Try yt-dlp for direct URL, fall back to original
+    pendingVideoUrl_ = RedditClient::resolveVideoUrl(url);
+    if (pendingVideoUrl_.empty()) pendingVideoUrl_ = url;
+
+    videoLoaded_ = false;
+    status_->SetLabel("Video: click Load Video to play\n" + wxString::FromAscii(url.c_str()));
     Layout();
 }
 
@@ -55,7 +86,10 @@ static size_t curlWrite(void *ptr, size_t sz, size_t nmemb, void *ud) {
 
 void ImageViewPanel::showImage(const std::string &url, const std::string &caption) {
     lastVideoUrl_.clear();
+    pendingVideoUrl_.clear();
     playBtn_->Hide();
+    media_->Hide();
+    bitmap_->Show();
     std::string cleanCaption;
     for (char c : caption) if ((unsigned char)c >= 0x20 && (unsigned char)c < 0x7F) cleanCaption += c;
     caption_->SetLabel(wxString::FromAscii(cleanCaption.c_str()));

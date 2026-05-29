@@ -235,6 +235,22 @@ std::vector<PostData> RedditClient::filterPosts(std::vector<PostData> posts) {
     return posts;
 }
 
+std::string RedditClient::resolveVideoUrl(const std::string &url) {
+    // Try yt-dlp to extract direct video URL
+    std::string cmd = "yt-dlp -g --no-playlist " + url + " 2>/dev/null";
+    FILE *fp = popen(cmd.c_str(), "r");
+    if (!fp) return "";
+    char buf[4096];
+    std::string result;
+    while (fgets(buf, sizeof(buf), fp)) result += buf;
+    pclose(fp);
+    // Return first line (direct URL), strip whitespace
+    size_t nl = result.find('\n');
+    if (nl != std::string::npos) result = result.substr(0, nl);
+    while (!result.empty() && (result.back() == '\n' || result.back() == '\r')) result.pop_back();
+    return (result.find("http") == 0) ? result : "";
+}
+
 std::string RedditClient::httpGet(const std::string &url) {
     fprintf(stderr, "[httpGet] %s\n", url.c_str()); fflush(stderr);
     std::string body;
