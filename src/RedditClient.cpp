@@ -195,7 +195,20 @@ static std::vector<PostData> parseOldRedditSearchResults(const std::string &html
                 size_t ie = chunk.find("\"", is);
                 if (ie != std::string::npos) {
                     std::string imgUrl = chunk.substr(is, ie - is);
+                    // Decode HTML entities
+                    size_t amp;
+                    while ((amp = imgUrl.find("&amp;")) != std::string::npos)
+                        imgUrl.replace(amp, 5, "&");
+                    while ((amp = imgUrl.find("&#x27;")) != std::string::npos)
+                        imgUrl.replace(amp, 6, "'");
+                    while ((amp = imgUrl.find("&lt;")) != std::string::npos)
+                        imgUrl.replace(amp, 4, "<");
+                    while ((amp = imgUrl.find("&gt;")) != std::string::npos)
+                        imgUrl.replace(amp, 4, ">");
                     if (imgUrl.find("http") != 0) imgUrl = "https:" + imgUrl;
+                    // Strip query params for clean URL
+                    size_t qm = imgUrl.find('?');
+                    if (qm != std::string::npos) imgUrl = imgUrl.substr(0, qm);
                     // external-preview.redd.it often doesn't serve images directly — skip
                     if (imgUrl.find("external-preview.redd.it") == std::string::npos)
                         p.url = imgUrl;
