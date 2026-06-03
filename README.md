@@ -1,6 +1,6 @@
-# PinkReader Desktop — RSS Feed Reader
+# PinkReader Desktop — Reddit Client for Desktop
 
-A desktop RSS/Atom feed reader built with wxWidgets 3.2 and C++20. Browse, search, and read posts from your favorite feeds with a native GUI.
+A native Reddit client built with wxWidgets 3.2 and C++20. Browse subreddits, view images, and search posts with a multi-pane GUI.
 
 ## Quick Start
 
@@ -12,13 +12,25 @@ cmake .. && make
 
 ## Features
 
-- Add and manage RSS/Atom feed subscriptions
-- Browse posts in a multi-pane layout
-- Image viewer panel
-- Full-text search across all feeds and posts
-- Mark posts as read/unread
-- OPML import/export
-- Offline reading with cached content
+- Browse r/popular, r/all, and any subreddit
+- Post list with thumbnails, scores, comment counts
+- Image viewer panel for post images
+- Search panel with history
+- Sort by hot, new, top, rising, controversial
+- Status bar with double-click-to-copy
+- Keyboard shortcuts (F5 refresh)
+
+## Panels
+
+- **Post List** — scrollable list of posts from the current subreddit
+- **Image Viewer** — displays the selected post's image
+- **Search** — type a subreddit name or search query
+
+## Architecture
+
+- C++20 + wxWidgets 3.2 for the GUI
+- libcurl for Reddit JSON API access
+- wxAUI for dockable panel layout
 
 ## Build
 
@@ -26,4 +38,4 @@ cmake .. && make
 mkdir build && cd build
 cmake .. && make
 ```
-Requires: wxWidgets 3.2+, CMake 3.16+, GCC 10+ or Clang 12+
+Requires: wxWidgets 3.2+, CMake 3.16+, GCC 10+ or Clang 12+, libcurl
